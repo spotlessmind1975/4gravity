@@ -8,7 +8,7 @@ CONST tokenB = 2
 
 DIM playfield AS BYTE WITH freeCell (columns,rows)
 DIM tokenX AS BYTE WITH unusedToken (tokens)
-DIM tokenY AS BYTE (tokens)
+DIM tokenY AS BYTE WITH unusedToken (tokens)
 DIM tokenC AS BYTE (tokens)
 
 lastTokenType = tokenB
@@ -25,6 +25,43 @@ imageHeight = IMAGE HEIGHT(tokenAImage)
 
 offsetWidth = ( SCREEN WIDTH - ( columns * imageWidth ) ) / 2
 offsetHeight = ( SCREEN HEIGHT - ( rows * imageHeight ) ) / 2
+
+REM --------------------------------------------------------------------------
+REM GRAPHICAL PROCEDURES
+REM --------------------------------------------------------------------------
+
+PROCEDURE drawMovingToken[t]
+
+    SHARED offsetWidth, offsetHeight
+    SHARED imageWidth, imageHeight
+    SHARED tokenAImage, tokenBImage, emptyImage
+    SHARED tokenY, tokenX, tokenC
+
+    x = tokenX(t)
+    y = tokenY(t)
+    c = tokenC(t)
+
+    previousX = offsetWidth + x*imageWidth
+
+    IF y > 0 THEN
+        previousY = offsetHeight + (y-1)*imageHeight
+        actualY = previousY + imageHeight
+    ELSE
+        actualY = offsetHeight + (y)*imageHeight
+        previousY = actualY
+    ENDIF
+
+    ' Restore previous position
+    PUT IMAGE emptyImage AT previousX, previousY 
+
+    ' Draw new position
+    IF c == tokenA THEN
+        PUT IMAGE tokenAImage AT previousX, actualY 
+    ELSE
+        PUT IMAGE tokenBImage AT previousX, actualY 
+    ENDIF
+
+END PROC
 
 PROCEDURE isCellOccupied[x,y]
     SHARED playfield
@@ -48,9 +85,16 @@ END PROC
 
 PROCEDURE moveTokenDown[t]
     SHARED playfield, tokenX, tokenY
-    playfield(tokenX(t),tokenY(t)) = freeCell
+    
+    IF tokenY(t) <> unusedToken THEN
+        playfield(tokenX(t),tokenY(t)) = freeCell
+    ENDIF
+
     tokenY(t) = tokenY(t) + 1
     playfield(tokenX(t),tokenY(t)) = t
+
+    drawMovingToken[t]
+
 END PROC
 
 PROCEDURE moveToken[t]
@@ -103,7 +147,6 @@ PROCEDURE putTokenAt[x,c]
 
             tokenX(t) = x
             tokenC(t) = c
-            playfield(x,y) = t
 
             RETURN TRUE
 
@@ -118,23 +161,19 @@ END PROC
 PROCEDURE drawPlayfield
 
     SHARED playfield
-    SHARED tokenAImage, tokenBImage, emptyImage
+    SHARED emptyImage
     SHARED imageWidth, imageHeight
     SHARED offsetWidth, offsetHeight
 
+    dy = offsetHeight
+
     FOR y = 0 TO rows-1
+        dx = offsetWidth
         FOR x = 0 TO columns-1
-            t = playfield(x,y) 
-            IF t == freeCell THEN
-                PUT IMAGE emptyImage AT offsetWidth + x*imageWidth, offsetHeight + y*imageHeight
-            ELSE 
-                IF tokenC(t) == tokenA THEN
-                    PUT IMAGE tokenAImage AT offsetWidth + x*imageWidth, offsetHeight + y*imageHeight
-                ELSE
-                    PUT IMAGE tokenBImage AT offsetWidth + x*imageWidth, offsetHeight + y*imageHeight
-                ENDIF
-            ENDIF
+            PUT IMAGE emptyImage AT dx, dy
+            dx = dx + imageWidth
         NEXT
+        dy = dy + imageHeight
     NEXT    
 
 END PROC
@@ -163,9 +202,10 @@ PROCEDURE pollKeyboardForColumn
 
 END PROC
 
+CALL drawPlayfield
+
 DO
 
-    CALL drawPlayfield
     CALL pollKeyboardForColumn
     CALL moveTokens
 
