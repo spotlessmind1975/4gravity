@@ -3,24 +3,28 @@ CONST columns = 7
 CONST tokens = rows*columns
 CONST freeCell = $ff
 CONST unusedToken = $ff
-CONST redToken = 1
-CONST yellowToken = 2
+CONST tokenA = 1
+CONST tokenB = 2
 
 DIM playfield AS BYTE WITH freeCell (columns,rows)
 DIM tokenX AS BYTE WITH unusedToken (tokens)
 DIM tokenY AS BYTE (tokens)
 DIM tokenC AS BYTE (tokens)
 
+lastTokenType = tokenB
+
 BITMAP ENABLE (320,200,2)
 CLS
 
-tokenImage = IMAGE LOAD("resources/token.png")
+tokenAImage = IMAGE LOAD("resources/tokenA.png")
+tokenBImage = IMAGE LOAD("resources/tokenB.png")
 emptyImage = IMAGE LOAD("resources/empty.png")
-imageWidth = IMAGE WIDTH(tokenImage)
-imageHeight = IMAGE HEIGHT(tokenImage)
+
+imageWidth = IMAGE WIDTH(tokenAImage)
+imageHeight = IMAGE HEIGHT(tokenAImage)
+
 offsetWidth = ( SCREEN WIDTH - ( columns * imageWidth ) ) / 2
 offsetHeight = ( SCREEN HEIGHT - ( rows * imageHeight ) ) / 2
-lastColor = RED
 
 PROCEDURE isCellOccupied[x,y]
     SHARED playfield
@@ -91,28 +95,44 @@ PROCEDURE putTokenAt[x,c]
     
     SHARED tokenX, tokenY, tokenC
 
-    t = takeNextUnusedToken[]
+    IF NOT isCellOccupied[x,0] THEN
 
-    EXIT PROC IF t == unusedToken
+        t = takeNextUnusedToken[]
 
-    tokenX(t) = x
-    tokenC(t) = c
+        IF t <> unusedToken THEN
+
+            tokenX(t) = x
+            tokenC(t) = c
+            playfield(x,y) = t
+
+            RETURN TRUE
+
+        ENDIF
+
+    ENDIF
+
+    RETURN FALSE
 
 END PROC
 
 PROCEDURE drawPlayfield
 
     SHARED playfield
-    SHARED tokenImage, emptyImage
+    SHARED tokenAImage, tokenBImage, emptyImage
     SHARED imageWidth, imageHeight
     SHARED offsetWidth, offsetHeight
 
     FOR y = 0 TO rows-1
         FOR x = 0 TO columns-1
-            IF playfield(x,y) == freeCell THEN
+            t = playfield(x,y) 
+            IF t == freeCell THEN
                 PUT IMAGE emptyImage AT offsetWidth + x*imageWidth, offsetHeight + y*imageHeight
             ELSE 
-                PUT IMAGE tokenImage AT offsetWidth + x*imageWidth, offsetHeight + y*imageHeight
+                IF tokenC(t) == tokenA THEN
+                    PUT IMAGE tokenAImage AT offsetWidth + x*imageWidth, offsetHeight + y*imageHeight
+                ELSE
+                    PUT IMAGE tokenBImage AT offsetWidth + x*imageWidth, offsetHeight + y*imageHeight
+                ENDIF
             ENDIF
         NEXT
     NEXT    
@@ -121,20 +141,24 @@ END PROC
 
 PROCEDURE pollKeyboardForColumn
 
-    SHARED lastColor
+    SHARED lastTokenType
 
     k = INKEY$
 
     x = VAL(k)
 
     IF ( x > 0 ) AND ( x <= columns ) THEN
-        IF lastColor == RED THEN
-            CALL putTokenAt[x,yellowToken]
-            lastColor = YELLOW
+
+        IF lastTokenType == tokenA THEN
+            actualTokenType = tokenB
         ELSE
-            CALL putTokenAt[x,redToken]
-            lastColor = RED
+            actualTokenType = tokenA
         ENDIF
+
+        IF putTokenAt[(x-1),actualTokenType] THEN
+            lastTokenType = actualTokenType
+        ENDIF
+
     ENDIF
 
 END PROC
