@@ -434,7 +434,6 @@ PROCEDURE checkIfPlayerWon
     '             RETURN player2
     '         ENDIF
     '     ENDIF
-    '     LOCATE 1,20: PRINT "y = ";y
     ' NEXT    
 
     ' FOR x = 0 TO columns-1
@@ -461,7 +460,6 @@ PROCEDURE checkIfPlayerWon
     '             RETURN player2
     '         ENDIF
     '     ENDIF
-    '     LOCATE 1,22: PRINT "x = ";x
     ' NEXT    
 
     ' FOR x = 0 TO (rows+columns)-1
@@ -475,7 +473,6 @@ PROCEDURE checkIfPlayerWon
     '             RETURN player2
     '         ENDIF
     '     ENDIF
-    '     LOCATE 1,23: PRINT "x = ";x
     ' NEXT    
 
     RETURN FALSE
