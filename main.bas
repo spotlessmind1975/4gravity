@@ -82,19 +82,19 @@ DIM tokenX AS BYTE WITH unusedToken (tokens)
 DIM tokenY AS BYTE WITH unusedToken (tokens)
 DIM tokenC AS BYTE WITH unusedToken (tokens)
 
-' These vectors will help to calculate the effective winner, without
-' exploring the playfield, that is (relatively) slow.
-DIM tokensPerRow AS BYTE (rows,2)
-DIM tokensPerColumn AS BYTE (columns,2)
-DIM tokensPerDiagonalA AS BYTE (columns+rows,2)
-DIM tokensPerDiagonalB AS BYTE (columns+rows,2)
-
 ' This variable store the last used token index.
 ' (we force to be a byte!)
 VAR lastUsedToken AS BYTE = unusedToken
 
+' This variable store the last used column.
+' (we force to be a byte!)
+VAR lastUsedColumn AS BYTE = unusedToken
+
 ' This variable store the player that must current play
 currentPlayer = player1
+
+' This variable store the player that must current wait
+previousPlayer = player2
 
 ' ============================================================================
 ' CODE SECTION
@@ -129,13 +129,16 @@ offsetHeight = ( SCREEN HEIGHT - ( rows * imageHeight ) ) / 2
 ' --- GRAPHICAL PROCEDURES
 ' ----------------------------------------------------------------------------
 
+' For commodity, all those variables are global:
+
+GLOBAL playfield, tokenX, tokenY, tokenC
+GLOBAL lastUsedToken, lastUsedColumn, currentPlayer, previousPlayer
+GLOBAL offsetWidth, offsetHeight
+GLOBAL imageWidth, imageHeight
+GLOBAL tokenAImage, tokenBImage, emptyImage
+
 ' This method is able to draw the movement of a single token.
 PROCEDURE drawMovingToken[t]
-
-    SHARED offsetWidth, offsetHeight
-    SHARED imageWidth, imageHeight
-    SHARED tokenAImage, tokenBImage, emptyImage
-    SHARED tokenY, tokenX, tokenC
 
     x = tokenX(t)
     y = tokenY(t)
@@ -164,10 +167,6 @@ END PROC
 ' This method is used to draw the entire playfield.
 PROCEDURE drawPlayfield
 
-    SHARED emptyImage
-    SHARED imageWidth, imageHeight
-    SHARED offsetWidth, offsetHeight
-
     dy = offsetHeight
 
     FOR y = 0 TO rows-1
@@ -185,41 +184,9 @@ END PROC
 ' --- ALGORITHMS PROCEDURES
 ' ----------------------------------------------------------------------------
 
-' This function will check if a given cell of the playfield is occupied by
-' a token (of any color).
-PROCEDURE isCellOccupied[x,y]
-
-    SHARED playfield
-
-    RETURN playfield(x,y) <> freeCell
-
-END PROC
-
-' This function will check if a given token has the cell under it 
-' occupied or not. 
-PROCEDURE isCellOccupiedUnderToken[t]
-
-    SHARED tokenX, tokenY
-
-    RETURN isCellOccupied[tokenX(t),tokenY(t)+1]
-
-END PROC
-
-' This function will check if a given token is on the lower border
-' of the playfield.
-PROCEDURE isTokenAtBottom[t]
-
-    SHARED tokenY
-
-    RETURN tokenY(t) == (rows-1)
-
-END PROC
 
 ' This procedure will move the token by one step down.
 PROCEDURE moveTokenDown[t]
-
-    SHARED playfield, tokenX, tokenY, tokenC
-    SHARED tokensPerRow, tokensPerColumn, tokensPerDiagonalA, tokensPerDiagonalB
 
     x = tokenX(t)
     y = tokenY(t)
@@ -227,21 +194,12 @@ PROCEDURE moveTokenDown[t]
 
     IF y <> unusedToken THEN
         playfield(x,y) = freeCell
-        tokensPerRow(y,c) = tokensPerRow(y,c) - 1 
-        tokensPerColumn(x,c) = tokensPerColumn(x,c) - 1 
-        tokensPerDiagonalA(x+y,c) = tokensPerDiagonalA(x+y,c) - 1 
-        tokensPerDiagonalB((columns-x-1)+y,c) = tokensPerDiagonalB((columns-x-1)+y,c) - 1 
     ENDIF
 
     y = y + 1
     tokenY(t) = y
 
     playfield(x,y) = c
-
-    tokensPerRow(y,c) = tokensPerRow(y,c) + 1 
-    tokensPerColumn(x,c) = tokensPerColumn(x,c) + 1 
-    tokensPerDiagonalA(x+y,c) = tokensPerDiagonalA(x+y,c) + 1 
-    tokensPerDiagonalB((columns-x-1)+y,c) = tokensPerDiagonalB((columns-x-1)+y,c) + 1 
 
     drawMovingToken[t]
 
@@ -252,13 +210,14 @@ END PROC
 ' the token down by one step.
 PROCEDURE moveToken[t]
     
-    SHARED playfield, tokenX, tokenY, lastUsedToken
-
     EXIT PROC IF t > lastUsedToken
-    EXIT PROC IF isTokenAtBottom[t]
+    EXIT PROC IF tokenY(t) == (rows-1)
 
-    IF NOT isCellOccupiedUnderToken[t] THEN
+    IF playfield(tokenX(t),tokenY(t)+1) == freeCell THEN
         CALL moveTokenDown[t]
+        RETURN TRUE
+    ELSE
+        RETURN FALSE
     ENDIF 
 
 END PROC
@@ -267,24 +226,24 @@ END PROC
 ' if the conditions are met.
 PROCEDURE moveTokens
 
-    SHARED lastUsedToken
+    anyMovedToken = FALSE
 
     EXIT PROC IF lastUsedToken == unusedToken
 
     FOR i = 0 TO lastUsedToken
-        moveToken[i]
+        anyMovedToken = anyMovedToken OR moveToken[i]
     NEXT
+
+    RETURN anyMovedToken
 
 END PROC
 
 ' This procedure will put (if possible) a token on the playfield.
 PROCEDURE putTokenAt[x,c]
     
-    SHARED tokenX, tokenY, tokenC, lastUsedToken
-
     EXIT PROC IF lastUsedToken == tokens
 
-    IF NOT isCellOccupied[x,0] THEN
+    IF playfield(x,0) == freeCell THEN
 
         INC lastUsedToken
         
@@ -292,6 +251,8 @@ PROCEDURE putTokenAt[x,c]
 
         tokenX(t) = x
         tokenC(t) = c
+
+        lastUsedColumn = x
 
         RETURN TRUE
 
@@ -304,8 +265,6 @@ END PROC
 ' This procedure will poll the keyboard for action from player.
 PROCEDURE pollKeyboardForColumn
 
-    SHARED currentPlayer
-
     k = INKEY$
 
     x = VAL(k)
@@ -315,9 +274,11 @@ PROCEDURE pollKeyboardForColumn
         IF currentPlayer == player1 THEN
             actualTokenType = tokenA
             nextPlayer = player2
+            previousPlayer = player1
         ELSE
             actualTokenType = tokenB
             nextPlayer = player1
+            previousPlayer = player2
         ENDIF
 
         IF putTokenAt[(x-1),actualTokenType] THEN
@@ -328,94 +289,33 @@ PROCEDURE pollKeyboardForColumn
 
 END PROC
 
-' This function will check if the player "c" won on a specific
-' column "x".
-PROCEDURE checkIfPlayerWonOnColumn[c,x]
+PROCEDURE countTokensOfAColorFromXYOnDirection[c,x,y,dx,dy]
 
-    SHARED playfield
+    cx = x
+    cy = y
+    t = 0
 
-    VAR count AS BYTE = 0
-
-    FOR y = 0 TO rows-1
-        IF ( playfield(x,y) == c ) THEN
-            INC count
-        ELSE
-            count = 0
+    FOR i=0 TO 3
+        IF playfield(cx,cy) <> c THEN
+            RETURN FALSE
         ENDIF
-    NEXT    
-
-    RETURN count >= 4
-
-END PROC
-
-' This function will check if the player "c" won on a specific
-' row "y".
-PROCEDURE checkIfPlayerWonOnRow[c,y]
-
-    SHARED playfield
-
-    VAR count AS BYTE = 0
-
-    FOR x = 0 TO columns-1
-        IF ( playfield(x,y) == c ) THEN
-            INC count
-        ELSE
-            count = 0
+        t = t + 1
+        cx = cx + dx
+        IF ( cx < 0 ) OR ( cx == columns ) THEN 
+            EXIT
         ENDIF
-    NEXT    
-
-    RETURN count >= 4
-
-END PROC
-
-' This function will check if the player "c" won on a specific
-' diagonal "A".
-PROCEDURE checkIfPlayerWonOnDiagonalA[c,d]
-
-    SHARED playfield
-
-    VAR count AS BYTE = 0
-
-    FOR x = 0 TO columns-1
-        IF x+d < rows THEN
-            IF ( playfield(x,x+d) == c ) THEN
-                INC count
-            ELSE
-                count = 0
-            ENDIF
+        cy = cy + dy
+        IF ( cy < 0 ) OR ( cy == rows ) THEN 
+            EXIT
         ENDIF
-    NEXT    
+    NEXT
 
-    RETURN count >= 4
-
-END PROC
-
-' This function will check if the player "c" won on a specific
-' diagonal "B".
-PROCEDURE checkIfPlayerWonOnDiagonalB[c,d]
-
-    SHARED playfield
-
-    VAR count AS BYTE = 0
-
-    FOR x = 0 TO columns-1
-        IF (columns-x-1)+d < rows THEN
-            IF ( playfield(x,(columns-x-1)+d) == c ) THEN
-                INC count
-            ELSE
-                count = 0
-            ENDIF
-        ENDIF
-    NEXT    
-
-    RETURN count >= 4
+    RETURN t > 3
 
 END PROC
 
 ' This procedure will check if any player has won
 PROCEDURE checkIfPlayerWon
-
-    SHARED lastUsedToken, tokensPerRow, tokensPerColumn, tokensPerDiagonalA, tokensPerDiagonalB
 
     result = FALSE
 
@@ -423,57 +323,47 @@ PROCEDURE checkIfPlayerWon
         RETURN FALSE
     ENDIF
 
-    ' FOR y = 0 TO rows-1
-    '     IF ( tokensPerRow(y,tokenA) >= 4 ) THEN
-    '         IF checkIfPlayerWonOnRow[tokenA,y] THEN
-    '             RETURN player1
-    '         ENDIF
-    '     ENDIF
-    '     IF ( tokensPerRow(y,tokenB) >= 4 ) THEN
-    '         IF checkIfPlayerWonOnRow[tokenB,y] THEN
-    '             RETURN player2
-    '         ENDIF
-    '     ENDIF
-    ' NEXT    
+    IF lastUsedColumn == unusedToken THEN
+        RETURN FALSE
+    ENDIF
 
-    ' FOR x = 0 TO columns-1
-    '     IF ( tokensPerColumn(x,tokenA) >= 4 ) THEN
-    '         IF checkIfPlayerWonOnColumn[tokenA,x] THEN
-    '             RETURN player1
-    '         ENDIF
-    '     ENDIF
-    '     IF ( tokensPerColumn(x,tokenB) >= 4 ) THEN
-    '         IF checkIfPlayerWonOnColumn[tokenB,x] THEN
-    '             RETURN player2
-    '         ENDIF
-    '     ENDIF
-    ' NEXT    
+    c = tokenC(lastUsedToken)
+    cx = tokenX(lastUsedToken)
+    cy = tokenY(lastUsedToken)
 
-    ' FOR x = 0 TO (rows+columns)-1
-    '     IF ( tokensPerDiagonalA(x,tokenA) >= 4 ) THEN
-    '         IF checkIfPlayerWonOnDiagonalA[tokenA,x] THEN
-    '             RETURN player1
-    '         ENDIF
-    '     ENDIF
-    '     IF ( tokensPerDiagonalA(x,tokenB) >= 4 ) THEN
-    '         IF checkIfPlayerWonOnDiagonalA[tokenB,x] THEN
-    '             RETURN player2
-    '         ENDIF
-    '     ENDIF
-    ' NEXT    
+    IF cy == unusedToken THEN
+        RETURN FALSE
+    ENDIF
 
-    ' FOR x = 0 TO (rows+columns)-1
-    '     IF ( tokensPerDiagonalB(x,tokenA) >= 4 ) THEN
-    '         IF checkIfPlayerWonOnDiagonalB[tokenA,x] THEN
-    '             RETURN player1
-    '         ENDIF
-    '     ENDIF
-    '     IF ( tokensPerDiagonalB(x,tokenB) >= 4 ) THEN
-    '         IF checkIfPlayerWonOnDiagonalB[tokenB,x] THEN
-    '             RETURN player2
-    '         ENDIF
-    '     ENDIF
-    ' NEXT    
+    IF countTokensOfAColorFromXYOnDirection[c,cx,cy,1,-1] THEN
+        RETURN previousPlayer
+    ENDIF
+
+    IF countTokensOfAColorFromXYOnDirection[c,cx,cy,1,0] THEN
+        RETURN previousPlayer
+    ENDIF
+
+    IF countTokensOfAColorFromXYOnDirection[c,cx,cy,1,1] THEN
+        RETURN previousPlayer
+    ENDIF
+
+    IF countTokensOfAColorFromXYOnDirection[c,cx,cy,0,1] THEN
+        RETURN previousPlayer
+    ENDIF
+
+    IF countTokensOfAColorFromXYOnDirection[c,cx,cy,-1,1] THEN
+        RETURN previousPlayer
+    ENDIF
+
+    IF countTokensOfAColorFromXYOnDirection[c,cx,cy,-1,0] THEN
+        RETURN previousPlayer
+    ENDIF
+
+    IF countTokensOfAColorFromXYOnDirection[c,cx,cy,-1,-1] THEN
+        RETURN previousPlayer
+    ENDIF
+
+    lastUsedColumn = unusedToken
 
     RETURN FALSE
 
@@ -490,20 +380,23 @@ CALL drawPlayfield
 ' --- MAIN LOOP
 ' ----------------------------------------------------------------------------
 
+blink = 0
+
 BEGIN GAMELOOP
 
     CALL pollKeyboardForColumn
 
-    CALL moveTokens
+    IF NOT moveTokens[] THEN
 
-    playerWon = checkIfPlayerWon[]
+        playerWon = checkIfPlayerWon[]
 
-    IF playerWon == player1 THEN
-        LOCATE 1,1: CENTER "player 1 win!"
-        HALT
-    ELSE IF playerWon == player2 THEN
-        LOCATE 1,1: PRINT "player 2 win! (";playerWon;",";player2;")"
-        HALT
+        IF playerWon == player1 THEN
+            LOCATE 1,1: CENTER "player 1 win!"
+            HALT
+        ELSE IF playerWon == player2 THEN
+            LOCATE 1,1: PRINT "player 2 win! (";playerWon;",";player2;")"
+            HALT
+        ENDIF
     ENDIF
 
 END GAMELOOP
