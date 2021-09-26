@@ -59,10 +59,15 @@ CONST unusedToken = $ff
 CONST tokenA = 0
 CONST tokenB = 1
 
-' This is the constants used to distinguish between first 
+' These are the constants used to distinguish between first 
 ' and second player.
+CONST noPlayer = 0
 CONST player1 = 1
 CONST player2 = 2
+
+' These are the constants used to distinguish between human and computer
+CONST human = 1
+CONST computer = 2
 
 ' ============================================================================
 ' DATA SECTION
@@ -96,6 +101,16 @@ currentPlayer = player1
 ' This variable store the player that must current wait
 previousPlayer = player2
 
+' This variable store if the player1 is an human or a computer
+player1Type = human
+
+' This variable store if the player2 is an human or a computer
+player2Type = human
+
+' This variable store the current frame for arrow and direction
+arrow = 0
+arrowDirection = 1
+
 ' ============================================================================
 ' CODE SECTION
 ' ============================================================================
@@ -110,9 +125,18 @@ BITMAP ENABLE (16)
 CLS
 
 ' Load the graphical resources.
+titleImage = IMAGE LOAD("resources/title.png")
 tokenAImage = IMAGE LOAD("resources/tokenAC.png")
 tokenBImage = IMAGE LOAD("resources/tokenBC.png")
 emptyImage = IMAGE LOAD("resources/emptyC.png")
+player1Image = IMAGE LOAD("resources/player1.png")
+player2Image = IMAGE LOAD("resources/player2.png")
+computer1Image = IMAGE LOAD("resources/computer1.png")
+computer2Image = IMAGE LOAD("resources/computer2.png")
+arrow1Image = IMAGE LOAD("resources/arrow1.png")
+arrow2Image = IMAGE LOAD("resources/arrow2.png")
+arrow3Image = IMAGE LOAD("resources/arrow3.png")
+clearImage = IMAGE LOAD("resources/clear.png")
 
 ' Precalculate the width and the height of the various images.
 ' They are always of the same size, so it is sufficient to
@@ -125,6 +149,14 @@ imageHeight = IMAGE HEIGHT(tokenAImage)
 offsetWidth = ( SCREEN WIDTH - ( columns * imageWidth ) ) / 2
 offsetHeight = ( SCREEN HEIGHT - ( rows * imageHeight ) ) / 2
 
+' Offset of the main title
+offsetTitleX = ( SCREEN WIDTH - IMAGE WIDTH(titleImage) ) / 2
+offsetTitleY = ( SCREEN HEIGHT - IMAGE HEIGHT(titleImage) ) / 2
+
+' Precalculate offsets of arrows
+arrowX2 = SCREEN WIDTH - IMAGE WIDTH(arrow1Image)
+arrowY = SCREEN HEIGHT - IMAGE HEIGHT(player1Image) - IMAGE HEIGHT(arrow1Image)
+
 ' ----------------------------------------------------------------------------
 ' --- GRAPHICAL PROCEDURES
 ' ----------------------------------------------------------------------------
@@ -136,6 +168,39 @@ GLOBAL lastUsedToken, lastUsedColumn, currentPlayer, previousPlayer
 GLOBAL offsetWidth, offsetHeight
 GLOBAL imageWidth, imageHeight
 GLOBAL tokenAImage, tokenBImage, emptyImage
+GLOBAL titleImage, player1Image, player2Image
+GLOBAL arrow1Image, arrow2Image, arrow3Image
+GLOBAL computer1Image, computer2Image
+GLOBAL arrowX2, arrowY
+GLOBAL arrow, arrowDirection
+GLOBAL clearImage
+GLOBAL offsetTitleX, offsetTitleY
+GLOBAL player1Type, player2Type
+
+PROCEDURE gameInit
+
+    FILL playfield WITH freeCell
+
+    FILL tokenX WITH unusedToken
+    FILL tokenY WITH unusedToken
+    FILL tokenC WITH unusedToken
+
+    lastUsedToken = unusedToken
+
+    lastUsedColumn = unusedToken
+
+    currentPlayer = player1
+
+    previousPlayer = player2
+
+    player1Type = human
+
+    player2Type = human
+
+    arrow = 0
+    arrowDirection = 1
+
+END PROC
 
 ' This method is able to draw the movement of a single token.
 PROCEDURE drawMovingToken[t]
@@ -167,6 +232,10 @@ END PROC
 ' This method is used to draw the entire playfield.
 PROCEDURE drawPlayfield
 
+    CLS
+
+    PUT IMAGE titleImage AT offsetTitleX, 0 
+
     dy = offsetHeight
 
     FOR y = 0 TO rows-1
@@ -178,12 +247,182 @@ PROCEDURE drawPlayfield
         dy = dy + imageHeight
     NEXT    
 
+    x = SCREEN WIDTH - IMAGE WIDTH(player1Image)
+    y = SCREEN HEIGHT - IMAGE HEIGHT(player1Image)
+
+    IF player1Type == human THEN
+        PUT IMAGE player1Image AT 0, y
+    ELSE
+        PUT IMAGE computer1Image AT 0, y
+    ENDIF
+
+    IF player2Type == human THEN
+        PUT IMAGE player2Image AT x, y
+    ELSE
+        PUT IMAGE computer2Image AT x, y
+    ENDIF
+
+    PEN RED
+    LOCATE 6, 24: PRINT "PLAYER 1";
+
+    PEN YELLOW
+    LOCATE 25, 24: PRINT "PLAYER 2";
+    
 END PROC
+
+PROCEDURE drawArrowAnimation
+
+    IF arrowDirection <> 0 THEN
+        INC arrow
+
+        IF arrow == 30 THEN
+            arrowDirection = 0
+        ENDIF
+
+    ELSE
+        DEC arrow
+
+        IF arrow == 0 THEN
+            arrowDirection = 1
+        ENDIF
+
+    ENDIF
+
+    IF currentPlayer == player1 THEN 
+        PEN RED
+        x = 0
+        PUT IMAGE clearImage AT arrowX2, arrowY 
+    ELSE
+        x = arrowX2
+        PEN YELLOW
+        PUT IMAGE clearImage AT 0, arrowY
+    ENDIF
+
+    IF arrow == 20 THEN
+        PUT IMAGE arrow3Image AT x, arrowY
+    ELSE IF arrow == 10 THEN
+        PUT IMAGE arrow2Image AT x, arrowY
+    ELSE IF arrow == 0 THEN
+        PUT IMAGE arrow3Image AT x, arrowY
+    ENDIF
+
+END PROC
+
+PROCEDURE drawPlayerStatus
+
+    IF currentPlayer == player1 THEN 
+        PEN RED
+    ELSE
+        PEN YELLOW
+    ENDIF
+
+    LOCATE 1, 5: CENTER "  1   2   3   4   5   6   7"
+
+END PROC
+
+PROCEDURE drawTitleScreen
+
+    CLS
+
+    xt = ( offsetTitleX + IMAGE WIDTH(player1Image) ) / 8 + 6
+
+    y = offsetTitleY - (offsetTitleY/2)
+    PUT IMAGE titleImage AT offsetTitleX, y
+
+    done = FALSE
+
+    k = ""
+    
+    REPEAT
+
+        PEN WHITE
+
+        y = offsetTitleY - (offsetTitleY/2)
+        y = y + 2 * IMAGE HEIGHT(titleImage)
+        yt = y / 8
+
+        IF player1Type == human THEN
+            PUT IMAGE player1Image AT offsetTitleX, y
+        ELSE
+            PUT IMAGE computer1Image AT offsetTitleX, y
+        ENDIF
+
+        LOCATE xt,yt: PRINT "[1] HUMAN / [2] COMPUTER"
+        LOCATE xt,yt+1: PRINT ""
+
+        y = y + 2 * IMAGE HEIGHT(player1Image)
+        yt = y / 8
+
+        IF player2Type == human THEN
+            PUT IMAGE player2Image AT offsetTitleX, y
+        ELSE
+            PUT IMAGE computer2Image AT offsetTitleX, y
+        ENDIF
+
+        LOCATE xt,(y/8): PRINT "[3] HUMAN / [4] COMPUTER"
+        LOCATE xt,yt+1: PRINT ""
+
+        LOCATE 10,yt + 4: CENTER "*SPACE* TO BEGIN"
+
+        DO
+            k = INKEY$
+        UNTIL k<>""
+
+        IF k == " " THEN
+            done = TRUE
+        ELSE
+            v = VAL(k)
+
+            IF v == 1 THEN
+                player1Type = human
+            ELSE IF v == 2 THEN
+                player1Type = computer
+            ELSE IF v == 3 THEN
+                player2Type = human
+            ELSE IF v == 4 THEN
+                player2Type = computer
+            ENDIF
+        ENDIF
+
+    UNTIL done
+
+END PROC
+
+PROCEDURE drawFinalScreen[p]
+
+    CLS
+    
+    xt = ( offsetTitleX + IMAGE WIDTH(player1Image) ) / 8 + 6
+
+    y = offsetTitleY - (offsetTitleY/2)
+    PUT IMAGE titleImage AT offsetTitleX, y
+    y = y + 2 * IMAGE HEIGHT(titleImage)
+    yt = y / 8
+
+    LOCATE 1,yt
+
+    IF p == player1 THEN
+
+        PEN RED
+        CENTER "PLAYER 1 WINS" 
+
+    ELSE
+
+        PEN YELLOW
+        CENTER "PLAYER 2 WINS" 
+
+    ENDIF
+
+    LOCATE 10,yt + 4: CENTER "*ANY KEY* TO CONTINUE"
+
+    WAIT KEY
+
+END PROC
+
 
 ' ----------------------------------------------------------------------------
 ' --- ALGORITHMS PROCEDURES
 ' ----------------------------------------------------------------------------
-
 
 ' This procedure will move the token by one step down.
 PROCEDURE moveTokenDown[t]
@@ -373,28 +612,40 @@ END PROC
 ' --- MAIN LOOP
 ' ----------------------------------------------------------------------------
 
-' Initial playfield
-CALL drawPlayfield
-
-' ----------------------------------------------------------------------------
-' --- MAIN LOOP
-' ----------------------------------------------------------------------------
-
 BEGIN GAMELOOP
 
-    CALL pollKeyboardForColumn
+    CALL gameInit
 
-    IF NOT moveTokens[] THEN
+    ' Initial screen (and options)
+    CALL drawTitleScreen
 
-        playerWon = checkIfPlayerWon[]
+    ' Initial playfield
+    CALL drawPlayfield
 
-        IF playerWon == player1 THEN
-            LOCATE 1,1: CENTER "player 1 win!"
-            HALT
-        ELSE IF playerWon == player2 THEN
-            LOCATE 1,1: PRINT "player 2 win! (";playerWon;",";player2;")"
-            HALT
+    ' Initial player status
+    CALL drawPlayerStatus
+    
+    playerWon = noPlayer
+
+    REPEAT
+
+        CALL drawArrowAnimation
+
+        CALL pollKeyboardForColumn
+
+        IF NOT moveTokens[] THEN
+
+            playerWon = checkIfPlayerWon[]
+
+            CALL drawPlayerStatus
+
         ENDIF
-    ENDIF
+
+    UNTIL playerWon <> noPlayer
+
+    ' Final screen
+    CALL drawFinalScreen[playerWon]
+    
+    playerWon = noPlayer
 
 END GAMELOOP
