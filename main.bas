@@ -272,38 +272,48 @@ END PROC
 
 PROCEDURE drawArrowAnimation
 
-    IF arrowDirection <> 0 THEN
-        INC arrow
+    SHARED lastTiming
 
-        IF arrow == 30 THEN
-            arrowDirection = 0
+    IF lastTiming == 0 THEN
+        lastTiming = TI
+    ELSE
+
+        IF ( TI - lastTiming ) > 1 THEN
+            IF arrowDirection == 1 THEN
+                INC arrow
+
+                IF arrow == 30 THEN
+                    arrowDirection = 0
+                ENDIF
+
+            ELSE
+                DEC arrow
+
+                IF arrow == 0 THEN
+                    arrowDirection = 1
+                ENDIF
+
+            ENDIF
+
+            IF currentPlayer == player1 THEN 
+                x = 0
+                PUT IMAGE clearImage AT arrowX2, arrowY 
+            ELSE
+                x = arrowX2
+                PUT IMAGE clearImage AT 0, arrowY
+            ENDIF
+
+            IF arrow == 21 THEN
+                PUT IMAGE arrow3Image AT x, arrowY
+            ELSE IF arrow == 11 THEN
+                PUT IMAGE arrow2Image AT x, arrowY
+            ELSE IF arrow == 1 THEN
+                PUT IMAGE arrow3Image AT x, arrowY
+            ENDIF
+
+            lastTiming = TI
         ENDIF
 
-    ELSE
-        DEC arrow
-
-        IF arrow == 0 THEN
-            arrowDirection = 1
-        ENDIF
-
-    ENDIF
-
-    IF currentPlayer == player1 THEN 
-        PEN RED
-        x = 0
-        PUT IMAGE clearImage AT arrowX2, arrowY 
-    ELSE
-        x = arrowX2
-        PEN YELLOW
-        PUT IMAGE clearImage AT 0, arrowY
-    ENDIF
-
-    IF arrow == 20 THEN
-        PUT IMAGE arrow3Image AT x, arrowY
-    ELSE IF arrow == 10 THEN
-        PUT IMAGE arrow2Image AT x, arrowY
-    ELSE IF arrow == 0 THEN
-        PUT IMAGE arrow3Image AT x, arrowY
     ENDIF
 
 END PROC
@@ -322,6 +332,10 @@ END PROC
 
 PROCEDURE drawTitleScreen
 
+    SHARED lastTiming
+
+    m = 0
+
     CLS
 
     xt = ( offsetTitleX + IMAGE WIDTH(player1Image) ) / 8 + 6
@@ -331,14 +345,16 @@ PROCEDURE drawTitleScreen
 
     done = FALSE
 
+    CLEAR KEY
+
     k = ""
-    
+
     REPEAT
 
         PEN WHITE
 
         y = offsetTitleY - (offsetTitleY/2)
-        y = y + 2 * IMAGE HEIGHT(titleImage)
+        y = y + 2 * IMAGE HEIGHT(titleImage) - (IMAGE HEIGHT(player1Image)/2)
         yt = y / 8
 
         IF player1Type == human THEN
@@ -362,10 +378,27 @@ PROCEDURE drawTitleScreen
         LOCATE xt,(y/8): PRINT "[3] HUMAN / [4] COMPUTER"
         LOCATE xt,yt+1: PRINT ""
 
-        LOCATE 10,yt + 4: CENTER "*SPACE* TO BEGIN"
+        LOCATE 10,yt + 4: CENTER "[SPACE] TO PLAY"
 
         DO
+
             k = INKEY$
+
+            IF (TI-lastTiming) > 600 THEN
+                IF m == 0 THEN
+                    PEN CYAN
+                    LOCATE 1,22: CENTER " SEE MORE GAMES AT "
+                    LOCATE 1,23: CENTER "https://retroprogramming.iwashere.eu/"
+                    m = 1
+                ELSE
+                    PEN BLUE
+                    LOCATE 1,22: CENTER "POWERED BY ugBASIC"
+                    LOCATE 1,23: CENTER "     https://ugbasic.iwashere.eu/    "
+                    m = 0
+                ENDIF
+                lastTiming = TI
+            ENDIF
+
         UNTIL k<>""
 
         IF k == " " THEN
