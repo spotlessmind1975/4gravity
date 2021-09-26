@@ -110,9 +110,9 @@ BITMAP ENABLE (16)
 CLS
 
 ' Load the graphical resources.
-tokenAImage = IMAGE LOAD("resources/tokenAC8.png")
-tokenBImage = IMAGE LOAD("resources/tokenBC8.png")
-emptyImage = IMAGE LOAD("resources/emptyC8.png")
+tokenAImage = IMAGE LOAD("resources/tokenAC.png")
+tokenBImage = IMAGE LOAD("resources/tokenBC.png")
+emptyImage = IMAGE LOAD("resources/emptyC.png")
 
 ' Precalculate the width and the height of the various images.
 ' They are always of the same size, so it is sufficient to
