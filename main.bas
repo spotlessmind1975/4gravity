@@ -106,13 +106,13 @@ previousPlayer = player2
 
 ' Let's choose an hires graphical mode with a minimal number of colors,
 ' and clear the screen, in order to support.
-BITMAP ENABLE (320,200,2)
+BITMAP ENABLE (16)
 CLS
 
 ' Load the graphical resources.
-tokenAImage = IMAGE LOAD("resources/tokenA.png")
-tokenBImage = IMAGE LOAD("resources/tokenB.png")
-emptyImage = IMAGE LOAD("resources/empty.png")
+tokenAImage = IMAGE LOAD("resources/tokenAC8.png")
+tokenBImage = IMAGE LOAD("resources/tokenBC8.png")
+emptyImage = IMAGE LOAD("resources/emptyC8.png")
 
 ' Precalculate the width and the height of the various images.
 ' They are always of the same size, so it is sufficient to
@@ -242,7 +242,7 @@ END PROC
 PROCEDURE putTokenAt[x,c]
     
     EXIT PROC IF lastUsedToken == tokens
-
+    
     IF playfield(x,0) == freeCell THEN
 
         INC lastUsedToken
@@ -379,8 +379,6 @@ CALL drawPlayfield
 ' ----------------------------------------------------------------------------
 ' --- MAIN LOOP
 ' ----------------------------------------------------------------------------
-
-blink = 0
 
 BEGIN GAMELOOP
 
