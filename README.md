@@ -31,6 +31,7 @@ Finally, pressing `[SPACE]` you will start the game.
 ## GAMEPLAY
 
 ![Gameplay](docs/gameplay.png)
+
 **RED** color will start always as the first, while **YELLOW** color will be always the second. The gameplay example shows the first player starting by dropping one red token into the center column of an empty game board. The arrow always points to who gets the next move.
 
 If the player is *human*, the keyboard will be enabled to wait for a keypress. By pressing a digit from `1` to `7` you will put a token on that particular column. If the column is not full, the token will move up to the lower free limit of the column. If the column is already full, the request will be ignored.
