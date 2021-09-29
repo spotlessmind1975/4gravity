@@ -42,7 +42,7 @@ CONST rows = 6
 CONST columns = 7
 
 ' Number of tokens that can be employed during the entire game.
-' Currently, will be rows x columns.
+' Currently, it will be rows x columns.
 CONST tokens = rows * columns
 
 ' Number of tokens "in a row" to win.
@@ -119,12 +119,13 @@ arrowDirection = 1
 ' --- STARTUP
 ' ----------------------------------------------------------------------------
 
-' Let's choose an hires graphical mode with a minimal number of colors,
-' and clear the screen, in order to support.
+' Let's choose an hires graphical mode with enough number of colors,
+' and let's clear the screen.
 BITMAP ENABLE (16)
 CLS
 
-' Load the graphical resources.
+' Assign all the graphical resources. Note the use of ":=" direct assing
+' operator. This is needed to avoid useless copies.
 titleImage := IMAGE LOAD("resources/title.png")
 tokenAImage := IMAGE LOAD("resources/tokenAC.png")
 tokenBImage := IMAGE LOAD("resources/tokenBC.png")
@@ -157,12 +158,7 @@ offsetTitleY = ( SCREEN HEIGHT - IMAGE HEIGHT(titleImage) ) / 2
 arrowX2 = SCREEN WIDTH - IMAGE WIDTH(arrow1Image)
 arrowY = SCREEN HEIGHT - IMAGE HEIGHT(player1Image) - IMAGE HEIGHT(arrow1Image)
 
-' ----------------------------------------------------------------------------
-' --- GRAPHICAL PROCEDURES
-' ----------------------------------------------------------------------------
-
 ' For commodity, all those variables are global:
-
 GLOBAL playfield, tokenX, tokenY, tokenC
 GLOBAL lastUsedToken, lastUsedColumn, currentPlayer, previousPlayer
 GLOBAL offsetWidth, offsetHeight
@@ -177,52 +173,85 @@ GLOBAL clearImage
 GLOBAL offsetTitleX, offsetTitleY
 GLOBAL player1Type, player2Type
 
+' ----------------------------------------------------------------------------
+' --- GRAPHICAL PROCEDURES
+' ----------------------------------------------------------------------------
+
+' This procedure is responsible for initializing all game variables 
+' before each game. Furthermore, it will also initialize the random number 
+' generation system. .
 PROCEDURE gameInit
 
+    ' Initialize the random number generator
     RANDOMIZE TIMER
     
+    ' Fill matrix with all free cells
     FILL playfield WITH freeCell
 
+    ' Fill vectors with unused tokens
     FILL tokenX WITH unusedToken
     FILL tokenY WITH unusedToken
     FILL tokenC WITH unusedToken
 
+    ' No token has been used.
     lastUsedToken = unusedToken
 
+    ' No column has been filled.
     lastUsedColumn = unusedToken
 
+    ' Player 1 starts always as first player.
+    ' Next player (or, previous player) is the second player
     currentPlayer = player1
-
     previousPlayer = player2
 
-    player1Type = human
+    ' Nobody wins
+    playerWon = noPlayer
 
+    ' Both players start as humans
+    player1Type = human
     player2Type = human
 
+    ' Reset the arrow animation.
     arrow = 0
     arrowDirection = 1
+
 
 END PROC
 
 ' This method is able to draw the movement of a single token.
 PROCEDURE drawMovingToken[t]
 
+    ' Let's take coordinates of the token and the token type.
     x = tokenX(t)
     y = tokenY(t)
     c = tokenC(t)
 
+    ' The abscissa is fixed, and it is calculated as the pixel
+    ' that starts the playfield plus the relative column given.
+    ' Each column of the playfield is large as a single token.
     previousX = offsetWidth + x*imageWidth
 
+    ' If the ordinate is greater than zero, it means that
+    ' the token is slowly falling on the column...
     IF y > 0 THEN
+        ' ... so we calculate the previous position of the
+        ' token, and the actual as the previous plus the
+        ' the height of a token.
         previousY = offsetHeight + (y-1)*imageHeight
         actualY = previousY + imageHeight
     ELSE
+        ' Otherwise, the actual and previous position are the
+        ' very same. This is needed to draw the token as soon
+        ' as it is inserted in the playfield.
         actualY = offsetHeight + (y)*imageHeight
         previousY = actualY
     ENDIF
 
+    ' Let's clear the previous position of the token.
     PUT IMAGE emptyImage AT previousX, previousY 
 
+    ' Now we can draw the token at the actual position.
+    ' We must use the correct image.
     IF c == tokenA THEN
         PUT IMAGE tokenAImage AT previousX, actualY 
     ELSE
@@ -231,15 +260,21 @@ PROCEDURE drawMovingToken[t]
 
 END PROC
 
-' This method is used to draw the entire playfield.
+' This procedure is used to draw the game plan. 
+' As it is drawn only once, it is a very 
+' simple routine.
 PROCEDURE drawPlayfield
 
+    ' Clear the screen    
     CLS
 
+    ' Put the title "4 GRAVITY!" at the head of the screen.
     PUT IMAGE titleImage AT offsetTitleX, 0 
 
+    ' To draw the various empty squares of the game, we iterate for the rows 
+    ' and for the columns. To avoid doing multiplications (which are usually 
+    ' slow operations) we use simple increments and reassignments.
     dy = offsetHeight
-
     FOR y = 0 TO rows-1
         dx = offsetWidth
         FOR x = 0 TO columns-1
@@ -249,9 +284,15 @@ PROCEDURE drawPlayfield
         dy = dy + imageHeight
     NEXT    
 
+    ' Now let's draw the two player icons, on the left (first player, red) 
+    ' and on the right of the screen (second player, yellow).
     x = SCREEN WIDTH - IMAGE WIDTH(player1Image)
     y = SCREEN HEIGHT - IMAGE HEIGHT(player1Image)
 
+    ' Clearly, we find ourselves in the situation of having to distinguish
+    ' whether the player is a human or a computer. This distinction is 
+    ' necessary for drawing using the correct icon, for both first and
+    ' second player.
     IF player1Type == human THEN
         PUT IMAGE player1Image AT 0, y
     ELSE
@@ -264,6 +305,7 @@ PROCEDURE drawPlayfield
         PUT IMAGE computer2Image AT x, y
     ENDIF
 
+    ' We characterize the player with his/her name.
     PEN RED
     LOCATE 6, 24: PRINT "PLAYER 1";
 
@@ -272,31 +314,50 @@ PROCEDURE drawPlayfield
     
 END PROC
 
+' This procedure is used to draw the arrow animation.
 PROCEDURE drawArrowAnimation
 
+    ' To ensure a constant speed animation, we memorize the moment 
+    ' in time when we drew the last frame. By doing so, we ensure 
+    ' that the animation will always be at the same speed.
     SHARED lastTiming
 
+    ' So, the first time we must register this time
     IF lastTiming == 0 THEN
         lastTiming = TI
+
+    ' On the other times...
     ELSE
 
+        ' When at least 1/60 of a second has passed, then we are 
+        ' allowed to draw the new arrow frame, if available. 
         IF ( TI - lastTiming ) > 1 THEN
+
+            ' The animation is "bounce", so as soon as we get to the
+            ' last frame we have to go back in the animation.
             IF arrowDirection == 1 THEN
+
+                ' Let's increment the number of the frame.
                 INC arrow
 
+                ' On the last frame, we revert direction.
                 IF arrow == 30 THEN
                     arrowDirection = 0
                 ENDIF
 
             ELSE
+
+                ' Let's decrement the number of the frame.
                 DEC arrow
 
+                ' On the first frame, we revert direction.
                 IF arrow == 0 THEN
                     arrowDirection = 1
                 ENDIF
 
             ENDIF
 
+            ' We delete the arrow of the player who is not playing now.
             IF currentPlayer == player1 THEN 
                 x = 0
                 PUT IMAGE clearImage AT arrowX2, arrowY 
@@ -305,6 +366,7 @@ PROCEDURE drawArrowAnimation
                 PUT IMAGE clearImage AT 0, arrowY
             ENDIF
 
+            ' We draw, if there is the possibility, the frame of the arrow.
             IF arrow == 21 THEN
                 PUT IMAGE arrow3Image AT x, arrowY
             ELSE IF arrow == 11 THEN
@@ -313,15 +375,21 @@ PROCEDURE drawArrowAnimation
                 PUT IMAGE arrow3Image AT x, arrowY
             ENDIF
 
+            ' Update timings
             lastTiming = TI
+
         ENDIF
 
     ENDIF
 
 END PROC
 
+' This procedure updates the color of the numbers above the columns 
+' to indicate which player is currently playing.
 PROCEDURE drawPlayerStatus
 
+    ' The color RED for the first player 
+    ' and YELLOW for the second player.
     IF currentPlayer == player1 THEN 
         PEN RED
     ELSE
@@ -332,33 +400,65 @@ PROCEDURE drawPlayerStatus
 
 END PROC
 
+' This procedure deals with designing the initial screen, 
+' including the menu with which the player can choose the 
+' game mode (two human players, player against computer, 
+' computer against computer).
 PROCEDURE drawTitleScreen
 
+    ' To ensure a constant speed animation of informational
+    ' title, we memorize the moment in time when we drew the 
+    ' last informational title. By doing so, we ensure 
+    ' that the animation will always be at the same speed.
     SHARED lastTiming
 
+    ' Take note of which informational message we are
+    ' going to show (0 = see more games; 1 = ugbasic)
     m = 0
 
-    CLS
-
-    xt = ( offsetTitleX + IMAGE WIDTH(player1Image) ) / 8 + 6
-
-    y = offsetTitleY - (offsetTitleY/2)
-    PUT IMAGE titleImage AT offsetTitleX, y
-
+    ' Take note if the SPACE key has been pressed,
+    ' and the game can be started as well.
     done = FALSE
 
+    ' Let's clear the screen
+    CLS
+
+    ' We calculate the position in which to write the text. 
+    ' In a nutshell, we place ourselves on the right of the 
+    ' player icon.
+    xt = ( offsetTitleX + IMAGE WIDTH(player1Image) ) / 8 + 6
+
+    ' The title, on the other hand, we position it centrally 
+    ' vertically on the screen, but moved slightly upwards.
+    y = offsetTitleY - (offsetTitleY/2)
+
+    ' Draw the title ("4 GRAVITY!")
+    PUT IMAGE titleImage AT offsetTitleX, y
+
+    ' Clear the keyboard buffer, in order to avoid to
+    ' detect any WAIT KEY key press as a key pressed.
     CLEAR KEY
 
+    ' Let's define the variable that will wait for a key press.
     k = ""
 
+    ' Here we start a loop where we will stay until the player 
+    ' has pressed the SPACE key.
     REPEAT
 
+        ' The main color of the writing will be white.
         PEN WHITE
 
+        ' This is the position from which to start writing.
+        ' It corresponds to the lower edge of the title, 
+        ' from which we move down to make room for the icons.
         y = offsetTitleY - (offsetTitleY/2)
         y = y + 2 * IMAGE HEIGHT(titleImage) - (IMAGE HEIGHT(player1Image)/2)
+        ' We calculate manually the equivalend text position.
         yt = y / 8
 
+        ' We design a different icon depending on whether 
+        ' it is a human player or a computer (player 1).
         IF player1Type == human THEN
             PUT IMAGE player1Image AT offsetTitleX, y
         ELSE
@@ -368,9 +468,13 @@ PROCEDURE drawTitleScreen
         LOCATE xt,yt: PRINT "[1] HUMAN / [2] COMPUTER"
         LOCATE xt,yt+1: PRINT ""
 
+        ' This is the next position from which to start writing.
         y = y + 2 * IMAGE HEIGHT(player1Image)
+        ' We calculate manually the equivalend text position.
         yt = y / 8
 
+        ' We design a different icon depending on whether 
+        ' it is a human player or a computer (player 2).
         IF player2Type == human THEN
             PUT IMAGE player2Image AT offsetTitleX, y
         ELSE
@@ -380,12 +484,16 @@ PROCEDURE drawTitleScreen
         LOCATE xt,(y/8): PRINT "[3] HUMAN / [4] COMPUTER"
         LOCATE xt,yt+1: PRINT ""
 
+        ' Let's suggest to press the SPACE key to PLAY!
         LOCATE 10,yt + 4: CENTER "[SPACE] TO PLAY"
 
+        ' A loop to wait for a valid key.
         DO
 
             k = INKEY$
 
+            ' While waiting for a button to be pressed, 
+            ' we offer a couple of informational messages.
             IF (TI-lastTiming) > 600 THEN
                 IF m == 0 THEN
                     PEN CYAN
@@ -403,9 +511,12 @@ PROCEDURE drawTitleScreen
 
         UNTIL k<>""
 
+        ' SPACE equals START GAME!
         IF k == " " THEN
             done = TRUE
         ELSE
+
+            ' Let's check the key pressed (it is a number?)
             v = VAL(k)
 
             IF v == 1 THEN
@@ -423,37 +534,53 @@ PROCEDURE drawTitleScreen
 
 END PROC
 
+' This procedure deals with designing the final screen.
 PROCEDURE drawFinalScreen[p]
 
+    ' Clear the screen
     CLS
     
-    xt = ( offsetTitleX + IMAGE WIDTH(player1Image) ) / 8 + 6
-
+    ' The title, on the other hand, we position it centrally 
+    ' vertically on the screen, but moved slightly upwards.
     y = offsetTitleY - (offsetTitleY/2)
+
+    ' Draw the title ("4 GRAVITY!")
     PUT IMAGE titleImage AT offsetTitleX, y
+
+    ' Calculate the position where to write
     y = y + 2 * IMAGE HEIGHT(titleImage)
+    xt = ( offsetTitleX + IMAGE WIDTH(player1Image) ) / 8 + 6
     yt = y / 8
 
+    ' Position the writing and...
     LOCATE 1,yt
 
+    ' ... if player 1 wins...
     IF p == player1 THEN
 
         PEN RED
         CENTER "PLAYER 1 WINS" 
 
-    ELSE
+    ' ... if player 2 wins...
+    ELSE IF p == player2 THEN
 
         PEN YELLOW
         CENTER "PLAYER 2 WINS" 
 
+    ' ... if nobody wins...
+    ELSE
+
+        PEN WHITE
+        CENTER "GAME TIE" 
+
     ENDIF
 
+    ' Suggest to press any key to start.
     LOCATE 10,yt + 4: CENTER "*ANY KEY* TO CONTINUE"
 
     WAIT KEY
 
 END PROC
-
 
 ' ' ----------------------------------------------------------------------------
 ' ' --- ALGORITHMS PROCEDURES
@@ -462,35 +589,55 @@ END PROC
 ' This procedure will move the token by one step down.
 PROCEDURE moveTokenDown[t]
 
+    ' Let's take coordinates of the token and the token type.
     x = tokenX(t)
     y = tokenY(t)
     c = tokenC(t)
 
+    ' If the ordinate is valid, then it means that we have
+    ' to free the actual position on the playfield.
     IF y <> unusedToken THEN
         playfield(x,y) = freeCell
     ENDIF
 
+    ' Move to the next ordinate.
     y = y + 1
+
+    ' Save the new position.
     tokenY(t) = y
 
+    ' Occupy the playfield cell.
     playfield(x,y) = c
 
+    ' Now we can draw the movement on the graphical playfield.
     drawMovingToken[t]
 
 END PROC
 
 ' This procedure will check if there are the conditions
-' to move down a token by one. If so, it will move
+' to move down a token by one cell. If so, it will move
 ' the token down by one step.
 PROCEDURE moveToken[t]
-    
+
+    ' The token cannot be moved if it is not currently used.    
     EXIT PROC WITH FALSE IF t > lastUsedToken
+
+    ' The token cannot be moved if it is on the last position.
     EXIT PROC WITH FALSE IF tokenY(t) == (rows-1)
 
+    ' The token can be moved only if the next (vertical) cell
+    ' is free. In that case...
     IF playfield(tokenX(t),tokenY(t)+1) == freeCell THEN
+
+        ' ... move the token down by one position!
         CALL moveTokenDown[t]
+
+        ' We communicate to the caller that the token has been
+        ' moved. This information will be used to avoid to
+        ' make any check while tokens are moving.
         RETURN TRUE
     ELSE
+        ' We communicate to the caller that the token has NOT been moved.
         RETURN FALSE
     ENDIF 
 
@@ -500,16 +647,22 @@ END PROC
 ' if the conditions are met.
 PROCEDURE moveTokens
 
-franco:
-    anyMovedToken = FALSE
-
+    ' There are not used tokens. So we communicate to the caller
+    ' that no token has been moved. This information will be used
+    ' to avoid to make any check while tokens are moving.
     EXIT PROC WITH FALSE IF lastUsedToken == unusedToken
 
+    ' Has any token been moved?
+    anyMovedToken = FALSE
+
+    ' Take a look for every used token: is there any token
+    ' that must be moved? 
     FOR i = 0 TO lastUsedToken
+        ' If so, the infomation about the fact that has
+        ' been moved will be retrieved and returned back.
         anyMovedToken = anyMovedToken OR moveToken[i]
     NEXT
 
-ciccio:
     RETURN anyMovedToken
 
 END PROC
@@ -517,12 +670,19 @@ END PROC
 ' This procedure will put (if possible) a token on the playfield.
 PROCEDURE putTokenAt[x,c]
     
+    ' No more token available, so... exit!
     EXIT PROC WITH FALSE IF lastUsedToken == tokens
     
+    ' Cannot put a token if another token is moving down...
+    EXIT PROC WITH FALSE IF lastUsedColumn <> unusedToken
+
+    ' If the given column is free...
     IF playfield(x,0) == freeCell THEN
 
+        ' Take another token, and initialize
+        ' its position and type.
         INC lastUsedToken
-        
+
         t = lastUsedToken
 
         tokenX(t) = x
@@ -530,14 +690,20 @@ PROCEDURE putTokenAt[x,c]
 
         lastUsedColumn = x
 
+        ' Return the information that the token has
+        ' been put on the playfield.
         RETURN TRUE
 
     ENDIF
 
+    ' Token cannot be put.
     RETURN FALSE
 
 END PROC
 
+' This is the common procedure between the computer and the human player. 
+' The aim is to check if there is a possibility to put a token.
+' Of course, he also takes care of changing players if that happens.
 PROCEDURE pollToken[x]
 
     IF currentPlayer == player1 THEN
@@ -552,14 +718,23 @@ PROCEDURE pollToken[x]
 
     IF putTokenAt[(x-1),actualTokenType] THEN
         currentPlayer = nextPlayer
+        ' Little hack to update arrow animation.
         lastTiming = TI: arrowDirection = 1: arrow = 0
     ENDIF
 
 END PROC
 
 ' This procedure will poll the computer for action.
+' Here is a little mathematical study to do. According to game theory, 
+' "connect 4" is not a game that has random components. In fact, it is 
+' a game where it is possible to define the winning and losing strategies 
+' in a deterministic way. This is where this somewhat "lateral" algorithm 
+' comes into play. It is about taking advantage of the principle 
+' that randomly choosing a position from among those possible, avoiding 
+' repetitions, can guarantee a good winning performance.
 PROCEDURE pollComputerForColumn
 
+    ' Avoid to use the very same column already used.
     SHARED lastComputerColumn
 
     x = ( ( RANDOM BYTE ) MOD columns ) + 1
@@ -584,75 +759,110 @@ PROCEDURE pollKeyboardForColumn
 
 END PROC
 
+' This routine allows to calculate how many tokens of a certain 
+' color there are along a certain line, starting from a specific 
+' position. This is partial information, which however tells us 
+' if the last move was successful.
 PROCEDURE countTokensOfAColorFromXYOnDirection[c,x,y,dx,dy]
 
+    ' Center of counting
     cx = x
     cy = y
-    t = 0
 
+    ' Number of tokens of the same value.
+    ' Counting myself as 1.
+    t = 1
+
+    ' Loop along at most 3 cells
     FOR i=0 TO 3
+
+        ' Is cell occupied by a different token type
+        ' or it is empty? Let's stop counting!
         IF playfield(cx,cy) <> c THEN
             RETURN t
         ENDIF
-        t = t + 1
+
+        ' Let's increment the number of tokens.
+
+        INC t
+
+        ' Move along the direction, stopping if
+        ' the border of the playfield has been reached.
         cx = cx + dx
         IF ( cx < 0 ) OR ( cx == columns ) THEN 
             EXIT
         ENDIF
+
+        ' Move along the direction, stopping if
+        ' the border of the playfield has been reached.
         cy = cy + dy
         IF ( cy < 0 ) OR ( cy == rows ) THEN 
             EXIT
         ENDIF
+
     NEXT
 
+    ' Return the number of tokens counted.
     RETURN t
 
 END PROC
 
-' This procedure will check if any player has won
+' This is the overall check procedure, which checks 
+' whether the last player won or lost. It is a 
+' "divide and conquer" algorithm; together with a 
+' check on the last move made.
 PROCEDURE checkIfPlayerWon
 
-    result = FALSE
-
+    ' Nobody can win if no token has been used.
     EXIT PROC WITH FALSE IF lastUsedToken == unusedToken 
+
+    ' Nobody can win if no token has been chosen.
     EXIT PROC WITH FALSE IF lastUsedColumn == unusedToken
 
+    ' Let's take coordinates of the token and the token type.
     c = tokenC(lastUsedToken)
     cx = tokenX(lastUsedToken)
     cy = tokenY(lastUsedToken)
 
-    IF cy == unusedToken THEN
-        RETURN FALSE
-    ENDIF
+    ' Nobody can win if last token is moving.
+    EXIT PROC WITH FALSE IF cy == unusedToken
 
-    IF countTokensOfAColorFromXYOnDirection[c,cx,cy,1,-1] > 3 THEN
+    ' Has the player won on NORD EAST direction?
+    IF countTokensOfAColorFromXYOnDirection[c,cx,cy,1,-1] >= tokensInARowToWin THEN
         RETURN previousPlayer
     ENDIF
 
-    IF countTokensOfAColorFromXYOnDirection[c,cx,cy,1,0] > 3 THEN
+    ' Has the player won on EAST direction?
+    IF countTokensOfAColorFromXYOnDirection[c,cx,cy,1,0] >= tokensInARowToWin THEN
         RETURN previousPlayer
     ENDIF
 
-    IF countTokensOfAColorFromXYOnDirection[c,cx,cy,1,1] > 3 THEN
+    ' Has the player won on SOUTH EAST direction?
+    IF countTokensOfAColorFromXYOnDirection[c,cx,cy,1,1] >= tokensInARowToWin THEN
         RETURN previousPlayer
     ENDIF
 
-    IF countTokensOfAColorFromXYOnDirection[c,cx,cy,0,1] > 3 THEN
+    ' Has the player won on SOUTH direction?
+    IF countTokensOfAColorFromXYOnDirection[c,cx,cy,0,1] >= tokensInARowToWin THEN
         RETURN previousPlayer
     ENDIF
 
-    IF countTokensOfAColorFromXYOnDirection[c,cx,cy,-1,1] > 3 THEN
+    ' Has the player won on SOUTH WEST direction?
+    IF countTokensOfAColorFromXYOnDirection[c,cx,cy,-1,1] >= tokensInARowToWin THEN
         RETURN previousPlayer
     ENDIF
 
-    IF countTokensOfAColorFromXYOnDirection[c,cx,cy,-1,0] > 3 THEN
+    ' Has the player won on NORD direction?
+    IF countTokensOfAColorFromXYOnDirection[c,cx,cy,-1,0] >= tokensInARowToWin THEN
         RETURN previousPlayer
     ENDIF
 
-    IF countTokensOfAColorFromXYOnDirection[c,cx,cy,-1,-1] > 3 THEN
+    ' Has the player won on NORTH WEST direction?
+    IF countTokensOfAColorFromXYOnDirection[c,cx,cy,-1,-1] >= tokensInARowToWin THEN
         RETURN previousPlayer
     ENDIF
 
+    ' Let's reset the used column.
     lastUsedColumn = unusedToken
 
     RETURN FALSE
@@ -663,8 +873,10 @@ END PROC
 ' --- MAIN LOOP
 ' ----------------------------------------------------------------------------
 
+' This is where the main game loop begins.
 BEGIN GAMELOOP
 
+    ' Initialize the game
     CALL gameInit
 
     ' Initial screen (and options)
@@ -673,21 +885,26 @@ BEGIN GAMELOOP
     ' Initial playfield
     CALL drawPlayfield
 
-    ' Initial player status
-    CALL drawPlayerStatus
-    
+    ' When the game start, nobody wins.    
     playerWon = noPlayer
 
+    ' We repeat this loop until someone has won 
+    ' (or all the tokens are gone!).
     REPEAT
 
+        ' Draw the arrow to make clear who is playing
         CALL drawArrowAnimation
 
+        ' If tokens are not moving...
         IF NOT moveTokens[] THEN
 
+            ' Check if somebody wins.
             playerWon = checkIfPlayerWon[]
 
+            ' Update the player status.
             CALL drawPlayerStatus
 
+            ' If nobody has win, asks for the next move.
             IF playerWon == noPlayer THEN
                 IF currentPlayer == player1 THEN
                     IF player1Type == human THEN
@@ -706,11 +923,9 @@ BEGIN GAMELOOP
 
         ENDIF
 
-    UNTIL playerWon <> noPlayer
+    UNTIL playerWon <> noPlayer OR lastUsedToken == tokens
 
     ' Final screen
     CALL drawFinalScreen[playerWon]
-    
-    playerWon = noPlayer
 
 END GAMELOOP
