@@ -1,0 +1,8 @@
+exe
+*.lbl
+*.asm
+*.lst
+*.prg
+*.bin
+*.xex
+
