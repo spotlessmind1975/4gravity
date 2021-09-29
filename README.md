@@ -40,9 +40,13 @@ If the player is *computer*, it will choose automatically one of the (free) seve
 
 The two players then alternate turns dropping one of their tokens at a time into an unfilled column, until one of them achieves an horizontal, vertical or diagonal four in a row, and wins the game. If the board fills up before either player achieves four in a row, then the game is a draw.
 
-## LANGUAGE
+## BUILD INSTRUCTIONS
 
 This game has been programmed using **[ugBASIC](https://ugbasic.iwashere.eu)**, a BASIC dialect specialized in programs that are [very efficient "by design"](https://retroprogramming.iwashere.eu/midres_library:isomorphism) on various 8-bit platforms, without the need for "fine tuning" them and without compromises of other dev-kits.
+
+To build the executable use the following command line:
+
+    ugbc.c64 -o 4gravity.prg 4gravity.bas
 
 ## LICENSE
 
