@@ -120,9 +120,10 @@ arrowDirection = 1
 ' ----------------------------------------------------------------------------
 
 ' Let's choose an hires graphical mode with enough number of colors,
-' and let's clear the screen.
+' and let's clear the screen with a black border.
 BITMAP ENABLE (16)
 CLS
+COLOR BORDER BLACK
 
 ' Assign all the graphical resources. Note the use of ":=" direct assing
 ' operator. This is needed to avoid useless copies.
