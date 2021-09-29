@@ -38,7 +38,7 @@ If the player is *human*, the keyboard will be enabled to wait for a keypress. B
 
 If the player is *computer*, it will choose automatically one of the (free) seven column to put the token on. 
 
-The two players then alternate turns dropping one of their tokens at a time into an unfilled column, until one of them achieves a diagonal four in a row, and wins the game. If the board fills up before either player achieves four in a row, then the game is a draw.
+The two players then alternate turns dropping one of their tokens at a time into an unfilled column, until one of them achieves an horizontal, vertical or diagonal four in a row, and wins the game. If the board fills up before either player achieves four in a row, then the game is a draw.
 
 ## LANGUAGE
 
