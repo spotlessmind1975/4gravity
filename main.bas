@@ -125,18 +125,18 @@ BITMAP ENABLE (16)
 CLS
 
 ' Load the graphical resources.
-titleImage = IMAGE LOAD("resources/title.png")
-tokenAImage = IMAGE LOAD("resources/tokenAC.png")
-tokenBImage = IMAGE LOAD("resources/tokenBC.png")
-emptyImage = IMAGE LOAD("resources/emptyC.png")
-player1Image = IMAGE LOAD("resources/player1.png")
-player2Image = IMAGE LOAD("resources/player2.png")
-computer1Image = IMAGE LOAD("resources/computer1.png")
-computer2Image = IMAGE LOAD("resources/computer2.png")
-arrow1Image = IMAGE LOAD("resources/arrow1.png")
-arrow2Image = IMAGE LOAD("resources/arrow2.png")
-arrow3Image = IMAGE LOAD("resources/arrow3.png")
-clearImage = IMAGE LOAD("resources/clear.png")
+titleImage := IMAGE LOAD("resources/title.png")
+tokenAImage := IMAGE LOAD("resources/tokenAC.png")
+tokenBImage := IMAGE LOAD("resources/tokenBC.png")
+emptyImage := IMAGE LOAD("resources/emptyC.png")
+player1Image := IMAGE LOAD("resources/player1.png")
+player2Image := IMAGE LOAD("resources/player2.png")
+computer1Image := IMAGE LOAD("resources/computer1.png")
+computer2Image := IMAGE LOAD("resources/computer2.png")
+arrow1Image := IMAGE LOAD("resources/arrow1.png")
+arrow2Image := IMAGE LOAD("resources/arrow2.png")
+arrow3Image := IMAGE LOAD("resources/arrow3.png")
+clearImage := IMAGE LOAD("resources/clear.png")
 
 ' Precalculate the width and the height of the various images.
 ' They are always of the same size, so it is sufficient to
@@ -179,6 +179,8 @@ GLOBAL player1Type, player2Type
 
 PROCEDURE gameInit
 
+    RANDOMIZE TIMER
+    
     FILL playfield WITH freeCell
 
     FILL tokenX WITH unusedToken
@@ -453,9 +455,9 @@ PROCEDURE drawFinalScreen[p]
 END PROC
 
 
-' ----------------------------------------------------------------------------
-' --- ALGORITHMS PROCEDURES
-' ----------------------------------------------------------------------------
+' ' ----------------------------------------------------------------------------
+' ' --- ALGORITHMS PROCEDURES
+' ' ----------------------------------------------------------------------------
 
 ' This procedure will move the token by one step down.
 PROCEDURE moveTokenDown[t]
@@ -482,8 +484,8 @@ END PROC
 ' the token down by one step.
 PROCEDURE moveToken[t]
     
-    EXIT PROC IF t > lastUsedToken
-    EXIT PROC IF tokenY(t) == (rows-1)
+    EXIT PROC WITH FALSE IF t > lastUsedToken
+    EXIT PROC WITH FALSE IF tokenY(t) == (rows-1)
 
     IF playfield(tokenX(t),tokenY(t)+1) == freeCell THEN
         CALL moveTokenDown[t]
@@ -498,14 +500,16 @@ END PROC
 ' if the conditions are met.
 PROCEDURE moveTokens
 
+franco:
     anyMovedToken = FALSE
 
-    EXIT PROC IF lastUsedToken == unusedToken
+    EXIT PROC WITH FALSE IF lastUsedToken == unusedToken
 
     FOR i = 0 TO lastUsedToken
         anyMovedToken = anyMovedToken OR moveToken[i]
     NEXT
 
+ciccio:
     RETURN anyMovedToken
 
 END PROC
@@ -513,7 +517,7 @@ END PROC
 ' This procedure will put (if possible) a token on the playfield.
 PROCEDURE putTokenAt[x,c]
     
-    EXIT PROC IF lastUsedToken == tokens
+    EXIT PROC WITH FALSE IF lastUsedToken == tokens
     
     IF playfield(x,0) == freeCell THEN
 
@@ -534,6 +538,39 @@ PROCEDURE putTokenAt[x,c]
 
 END PROC
 
+PROCEDURE pollToken[x]
+
+    IF currentPlayer == player1 THEN
+        actualTokenType = tokenA
+        nextPlayer = player2
+        previousPlayer = player1
+    ELSE
+        actualTokenType = tokenB
+        nextPlayer = player1
+        previousPlayer = player2
+    ENDIF
+
+    IF putTokenAt[(x-1),actualTokenType] THEN
+        currentPlayer = nextPlayer
+        lastTiming = TI: arrowDirection = 1: arrow = 0
+    ENDIF
+
+END PROC
+
+' This procedure will poll the computer for action.
+PROCEDURE pollComputerForColumn
+
+    SHARED lastComputerColumn
+
+    x = ( ( RANDOM BYTE ) MOD columns ) + 1
+
+    IF ( x > 0 ) AND ( x <= columns ) AND ( lastComputerColumn <> x ) THEN
+        CALL pollToken[x]
+        lastComputerColumn = x
+    ENDIF
+
+END PROC
+
 ' This procedure will poll the keyboard for action from player.
 PROCEDURE pollKeyboardForColumn
 
@@ -542,21 +579,7 @@ PROCEDURE pollKeyboardForColumn
     x = VAL(k)
 
     IF ( x > 0 ) AND ( x <= columns ) THEN
-
-        IF currentPlayer == player1 THEN
-            actualTokenType = tokenA
-            nextPlayer = player2
-            previousPlayer = player1
-        ELSE
-            actualTokenType = tokenB
-            nextPlayer = player1
-            previousPlayer = player2
-        ENDIF
-
-        IF putTokenAt[(x-1),actualTokenType] THEN
-            currentPlayer = nextPlayer
-        ENDIF
-
+        CALL pollToken[x]
     ENDIF
 
 END PROC
@@ -569,7 +592,7 @@ PROCEDURE countTokensOfAColorFromXYOnDirection[c,x,y,dx,dy]
 
     FOR i=0 TO 3
         IF playfield(cx,cy) <> c THEN
-            RETURN FALSE
+            RETURN t
         ENDIF
         t = t + 1
         cx = cx + dx
@@ -582,7 +605,7 @@ PROCEDURE countTokensOfAColorFromXYOnDirection[c,x,y,dx,dy]
         ENDIF
     NEXT
 
-    RETURN t > 3
+    RETURN t
 
 END PROC
 
@@ -591,13 +614,8 @@ PROCEDURE checkIfPlayerWon
 
     result = FALSE
 
-    IF lastUsedToken == unusedToken THEN
-        RETURN FALSE
-    ENDIF
-
-    IF lastUsedColumn == unusedToken THEN
-        RETURN FALSE
-    ENDIF
+    EXIT PROC WITH FALSE IF lastUsedToken == unusedToken 
+    EXIT PROC WITH FALSE IF lastUsedColumn == unusedToken
 
     c = tokenC(lastUsedToken)
     cx = tokenX(lastUsedToken)
@@ -607,31 +625,31 @@ PROCEDURE checkIfPlayerWon
         RETURN FALSE
     ENDIF
 
-    IF countTokensOfAColorFromXYOnDirection[c,cx,cy,1,-1] THEN
+    IF countTokensOfAColorFromXYOnDirection[c,cx,cy,1,-1] > 3 THEN
         RETURN previousPlayer
     ENDIF
 
-    IF countTokensOfAColorFromXYOnDirection[c,cx,cy,1,0] THEN
+    IF countTokensOfAColorFromXYOnDirection[c,cx,cy,1,0] > 3 THEN
         RETURN previousPlayer
     ENDIF
 
-    IF countTokensOfAColorFromXYOnDirection[c,cx,cy,1,1] THEN
+    IF countTokensOfAColorFromXYOnDirection[c,cx,cy,1,1] > 3 THEN
         RETURN previousPlayer
     ENDIF
 
-    IF countTokensOfAColorFromXYOnDirection[c,cx,cy,0,1] THEN
+    IF countTokensOfAColorFromXYOnDirection[c,cx,cy,0,1] > 3 THEN
         RETURN previousPlayer
     ENDIF
 
-    IF countTokensOfAColorFromXYOnDirection[c,cx,cy,-1,1] THEN
+    IF countTokensOfAColorFromXYOnDirection[c,cx,cy,-1,1] > 3 THEN
         RETURN previousPlayer
     ENDIF
 
-    IF countTokensOfAColorFromXYOnDirection[c,cx,cy,-1,0] THEN
+    IF countTokensOfAColorFromXYOnDirection[c,cx,cy,-1,0] > 3 THEN
         RETURN previousPlayer
     ENDIF
 
-    IF countTokensOfAColorFromXYOnDirection[c,cx,cy,-1,-1] THEN
+    IF countTokensOfAColorFromXYOnDirection[c,cx,cy,-1,-1] > 3 THEN
         RETURN previousPlayer
     ENDIF
 
@@ -664,13 +682,27 @@ BEGIN GAMELOOP
 
         CALL drawArrowAnimation
 
-        CALL pollKeyboardForColumn
-
         IF NOT moveTokens[] THEN
 
             playerWon = checkIfPlayerWon[]
 
             CALL drawPlayerStatus
+
+            IF playerWon == noPlayer THEN
+                IF currentPlayer == player1 THEN
+                    IF player1Type == human THEN
+                        CALL pollKeyboardForColumn
+                    ELSE
+                        CALL pollComputerForColumn
+                    ENDIF
+                ELSE
+                    IF player2Type == human THEN
+                        CALL pollKeyboardForColumn
+                    ELSE
+                        CALL pollComputerForColumn
+                    ENDIF
+                ENDIF
+            ENDIF
 
         ENDIF
 
