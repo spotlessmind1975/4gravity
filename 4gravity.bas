@@ -195,26 +195,26 @@ PROCEDURE gameInit
     FILL tokenC WITH unusedToken
 
     ' No token has been used.
-    lastUsedToken = unusedToken
+    lastUsedToken = # unusedToken
 
     ' No column has been filled.
-    lastUsedColumn = unusedToken
+    lastUsedColumn = # unusedToken
 
     ' Player 1 starts always as first player.
     ' Next player (or, previous player) is the second player
-    currentPlayer = player1
-    previousPlayer = player2
+    currentPlayer = # player1
+    previousPlayer = # player2
 
     ' Nobody wins
-    playerWon = noPlayer
+    playerWon = # noPlayer
 
     ' Both players start as humans
-    player1Type = human
-    player2Type = human
+    player1Type = # human
+    player2Type = # human
 
     ' Reset the arrow animation.
-    arrow = 0
-    arrowDirection = 1
+    arrow = # 0
+    arrowDirection = # 1
 
 
 END PROC
