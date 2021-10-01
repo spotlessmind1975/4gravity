@@ -143,35 +143,42 @@ clearImage := IMAGE LOAD("resources/clear.png")
 ' Precalculate the width and the height of the various images.
 ' They are always of the same size, so it is sufficient to
 ' take the first image's dimensions.
-imageWidth = IMAGE WIDTH(tokenAImage)
-imageHeight = IMAGE HEIGHT(tokenAImage)
+CONST imageWidth = IMAGE WIDTH(tokenAImage)
+CONST imageHeight = IMAGE HEIGHT(tokenAImage)
 
 ' Precalculate offsets in order to put the playfield at the center
 ' of the screen.
-offsetWidth = ( SCREEN WIDTH - ( columns * imageWidth ) ) / 2
-offsetHeight = ( SCREEN HEIGHT - ( rows * imageHeight ) ) / 2
+CONST offsetWidth = ( SCREEN WIDTH - ( columns * imageWidth ) ) / 2
+CONST offsetHeight = ( SCREEN HEIGHT - ( rows * imageHeight ) ) / 2
 
 ' Offset of the main title
-offsetTitleX = ( SCREEN WIDTH - IMAGE WIDTH(titleImage) ) / 2
-offsetTitleY = ( SCREEN HEIGHT - IMAGE HEIGHT(titleImage) ) / 2
+CONST offsetTitleX = ( SCREEN WIDTH - IMAGE WIDTH(titleImage) ) / 2
+CONST offsetTitleY = ( SCREEN HEIGHT - IMAGE HEIGHT(titleImage) ) / 2
+
+' Offset of the main title (final)
+CONST offsetYTitle = offsetTitleY - (offsetTitleY/2) 
 
 ' Precalculate offsets of arrows
-arrowX2 = SCREEN WIDTH - IMAGE WIDTH(arrow1Image)
-arrowY = SCREEN HEIGHT - IMAGE HEIGHT(player1Image) - IMAGE HEIGHT(arrow1Image)
+CONST arrowX2 = SCREEN WIDTH - IMAGE WIDTH(arrow1Image)
+CONST arrowY = SCREEN HEIGHT - IMAGE HEIGHT(player1Image) - IMAGE HEIGHT(arrow1Image)
+
+' Precalculate offsets of players
+CONST offsetYPlayers = SCREEN HEIGHT - IMAGE HEIGHT(player1Image)
+CONST offsetXPlayer2 = SCREEN WIDTH - IMAGE WIDTH(player1Image)
+
+' Precalculate offsets of menu entries
+CONST offsetXMainMenu = ( offsetTitleX + IMAGE WIDTH(player1Image) ) / 8 + 6
+CONST offsetYMainMenu = offsetYTitle + 2 * IMAGE HEIGHT(titleImage) - (IMAGE HEIGHT(player1Image)/2)
 
 ' For commodity, all those variables are global:
 GLOBAL playfield, tokenX, tokenY, tokenC
 GLOBAL lastUsedToken, lastUsedColumn, currentPlayer, previousPlayer
-GLOBAL offsetWidth, offsetHeight
-GLOBAL imageWidth, imageHeight
 GLOBAL tokenAImage, tokenBImage, emptyImage
 GLOBAL titleImage, player1Image, player2Image
 GLOBAL arrow1Image, arrow2Image, arrow3Image
 GLOBAL computer1Image, computer2Image
-GLOBAL arrowX2, arrowY
 GLOBAL arrow, arrowDirection
 GLOBAL clearImage
-GLOBAL offsetTitleX, offsetTitleY
 GLOBAL player1Type, player2Type
 
 ' ----------------------------------------------------------------------------
@@ -275,9 +282,9 @@ PROCEDURE drawPlayfield
     ' To draw the various empty squares of the game, we iterate for the rows 
     ' and for the columns. To avoid doing multiplications (which are usually 
     ' slow operations) we use simple increments and reassignments.
-    dy = offsetHeight
+    dy = # offsetHeight
     FOR y = 0 TO rows-1
-        dx = offsetWidth
+        dx = # offsetWidth
         FOR x = 0 TO columns-1
             PUT IMAGE emptyImage AT dx, dy
             dx = dx + imageWidth
@@ -287,23 +294,20 @@ PROCEDURE drawPlayfield
 
     ' Now let's draw the two player icons, on the left (first player, red) 
     ' and on the right of the screen (second player, yellow).
-    x = SCREEN WIDTH - IMAGE WIDTH(player1Image)
-    y = SCREEN HEIGHT - IMAGE HEIGHT(player1Image)
-
     ' Clearly, we find ourselves in the situation of having to distinguish
     ' whether the player is a human or a computer. This distinction is 
     ' necessary for drawing using the correct icon, for both first and
     ' second player.
     IF player1Type == human THEN
-        PUT IMAGE player1Image AT 0, y
+        PUT IMAGE player1Image AT 0, offsetYPlayers
     ELSE
         PUT IMAGE computer1Image AT 0, y
     ENDIF
 
     IF player2Type == human THEN
-        PUT IMAGE player2Image AT x, y
+        PUT IMAGE player2Image AT offsetXPlayer2, offsetYPlayers
     ELSE
-        PUT IMAGE computer2Image AT x, y
+        PUT IMAGE computer2Image AT offsetXPlayer2, offsetYPlayers
     ENDIF
 
     ' We characterize the player with his/her name.
@@ -343,7 +347,7 @@ PROCEDURE drawArrowAnimation
 
                 ' On the last frame, we revert direction.
                 IF arrow == 30 THEN
-                    arrowDirection = 0
+                    arrowDirection = # 0
                 ENDIF
 
             ELSE
@@ -353,17 +357,17 @@ PROCEDURE drawArrowAnimation
 
                 ' On the first frame, we revert direction.
                 IF arrow == 0 THEN
-                    arrowDirection = 1
+                    arrowDirection = # 1
                 ENDIF
 
             ENDIF
 
             ' We delete the arrow of the player who is not playing now.
             IF currentPlayer == player1 THEN 
-                x = 0
+                x = # 0
                 PUT IMAGE clearImage AT arrowX2, arrowY 
             ELSE
-                x = arrowX2
+                x = # arrowX2
                 PUT IMAGE clearImage AT 0, arrowY
             ENDIF
 
@@ -427,11 +431,10 @@ PROCEDURE drawTitleScreen
     ' We calculate the position in which to write the text. 
     ' In a nutshell, we place ourselves on the right of the 
     ' player icon.
-    xt = ( offsetTitleX + IMAGE WIDTH(player1Image) ) / 8 + 6
 
     ' The title, on the other hand, we position it centrally 
     ' vertically on the screen, but moved slightly upwards.
-    y = offsetTitleY - (offsetTitleY/2)
+    y = offsetYTitle
 
     ' Draw the title ("4 GRAVITY!")
     PUT IMAGE titleImage AT offsetTitleX, y
@@ -453,37 +456,38 @@ PROCEDURE drawTitleScreen
         ' This is the position from which to start writing.
         ' It corresponds to the lower edge of the title, 
         ' from which we move down to make room for the icons.
-        y = offsetTitleY - (offsetTitleY/2)
-        y = y + 2 * IMAGE HEIGHT(titleImage) - (IMAGE HEIGHT(player1Image)/2)
         ' We calculate manually the equivalend text position.
-        yt = y / 8
+        yt = offsetYMainMenu / 8
 
         ' We design a different icon depending on whether 
         ' it is a human player or a computer (player 1).
         IF player1Type == human THEN
-            PUT IMAGE player1Image AT offsetTitleX, y
+            PUT IMAGE player1Image AT offsetTitleX, offsetYMainMenu
         ELSE
-            PUT IMAGE computer1Image AT offsetTitleX, y
+            PUT IMAGE computer1Image AT offsetTitleX, offsetYMainMenu
         ENDIF
 
-        LOCATE xt,yt: PRINT "[1] HUMAN / [2] COMPUTER"
-        LOCATE xt,yt+1: PRINT ""
+        LOCATE offsetXMainMenu,yt: PRINT "[1] HUMAN / [2] COMPUTER";
+        INC yt
+        LOCATE offsetXMainMenu,yt: PRINT "";
 
         ' This is the next position from which to start writing.
-        y = y + 2 * IMAGE HEIGHT(player1Image)
+        CONST offsetYMainMenu2 = offsetYMainMenu + 2 * IMAGE HEIGHT(player1Image)
+        y = offsetYMainMenu2
         ' We calculate manually the equivalend text position.
-        yt = y / 8
+        yt = offsetYMainMenu2 / 8
 
         ' We design a different icon depending on whether 
         ' it is a human player or a computer (player 2).
         IF player2Type == human THEN
-            PUT IMAGE player2Image AT offsetTitleX, y
+            PUT IMAGE player2Image AT offsetTitleX, offsetYMainMenu2
         ELSE
-            PUT IMAGE computer2Image AT offsetTitleX, y
+            PUT IMAGE computer2Image AT offsetTitleX, offsetYMainMenu2
         ENDIF
 
-        LOCATE xt,(y/8): PRINT "[3] HUMAN / [4] COMPUTER"
-        LOCATE xt,yt+1: PRINT ""
+        LOCATE offsetXMainMenu,yt: PRINT "[3] HUMAN / [4] COMPUTER"
+        INC yt
+        LOCATE offsetXMainMenu,yt: PRINT ""
 
         ' Let's suggest to press the SPACE key to PLAY!
         LOCATE 10,yt + 4: CENTER "[SPACE] TO PLAY"
@@ -543,14 +547,11 @@ PROCEDURE drawFinalScreen[p]
     
     ' The title, on the other hand, we position it centrally 
     ' vertically on the screen, but moved slightly upwards.
-    y = offsetTitleY - (offsetTitleY/2)
-
     ' Draw the title ("4 GRAVITY!")
-    PUT IMAGE titleImage AT offsetTitleX, y
+    PUT IMAGE titleImage AT offsetTitleX, offsetYTitle
 
     ' Calculate the position where to write
-    y = y + 2 * IMAGE HEIGHT(titleImage)
-    xt = ( offsetTitleX + IMAGE WIDTH(player1Image) ) / 8 + 6
+    y = offsetYTitle + 2 * IMAGE HEIGHT(titleImage)
     yt = y / 8
 
     ' Position the writing and...
