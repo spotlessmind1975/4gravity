@@ -169,6 +169,9 @@ CONST offsetXPlayer2 = SCREEN WIDTH - IMAGE WIDTH(player1Image)
 ' Precalculate offsets of menu entries
 CONST offsetXMainMenu = ( offsetTitleX + IMAGE WIDTH(player1Image) ) / 8 + 6
 CONST offsetYMainMenu = offsetYTitle + 2 * IMAGE HEIGHT(titleImage) - (IMAGE HEIGHT(player1Image)/2)
+CONST offsetYMainMenu2 = offsetYMainMenu + 2 * IMAGE HEIGHT(player1Image)
+
+CONST screenHeight = SCREEN HEIGHT
 
 ' For commodity, all those variables are global:
 GLOBAL playfield, tokenX, tokenY, tokenC
@@ -276,8 +279,10 @@ PROCEDURE drawPlayfield
     ' Clear the screen    
     CLS
 
-    ' Put the title "4 GRAVITY!" at the head of the screen.
-    PUT IMAGE titleImage AT offsetTitleX, 0 
+    IF ( screenHeight >= 100 ) THEN
+        ' Put the title "4 GRAVITY!" at the head of the screen.
+        PUT IMAGE titleImage AT offsetTitleX, 0 
+    ENDIF
 
     ' To draw the various empty squares of the game, we iterate for the rows 
     ' and for the columns. To avoid doing multiplications (which are usually 
@@ -310,7 +315,7 @@ PROCEDURE drawPlayfield
         PUT IMAGE computer2Image AT offsetXPlayer2, offsetYPlayers
     ENDIF
 
-    IF SCREEN WIDTH >= 160 THEN
+    IF ( screenHeight >= 100 ) THEN
         ' We characterize the player with his/her name.
         PEN RED
         LOCATE 6, 24: PRINT "PLAYER 1";
@@ -395,7 +400,7 @@ END PROC
 ' to indicate which player is currently playing.
 PROCEDURE drawPlayerStatus
 
-    IF SCREEN WIDTH >= 160 THEN
+    IF ( screenHeight >= 100 ) THEN
         ' The color RED for the first player 
         ' and YELLOW for the second player.
         IF currentPlayer == player1 THEN 
@@ -471,7 +476,7 @@ PROCEDURE drawTitleScreen
             PUT IMAGE computer1Image AT offsetTitleX - IMAGE WIDTH(player1Image), offsetYMainMenu
         ENDIF
 
-        IF SCREEN WIDTH >= 160 THEN
+        IF ( screenHeight >= 100 ) THEN
 
             LOCATE offsetXMainMenu,yt: PRINT "[1] HUMAN / [2] COMPUTER";
             INC yt
@@ -484,7 +489,6 @@ PROCEDURE drawTitleScreen
         ENDIF
 
         ' This is the next position from which to start writing.
-        CONST offsetYMainMenu2 = offsetYMainMenu + 2 * IMAGE HEIGHT(player1Image)
         y = offsetYMainMenu2
         ' We calculate manually the equivalend text position.
         yt = offsetYMainMenu2 / 8
@@ -497,7 +501,7 @@ PROCEDURE drawTitleScreen
             PUT IMAGE computer2Image AT offsetTitleX - IMAGE WIDTH(player1Image), offsetYMainMenu2
         ENDIF
 
-        IF SCREEN WIDTH >= 160 THEN
+        IF ( screenHeight >= 100 ) THEN
 
             LOCATE offsetXMainMenu,yt: PRINT "[3] HUMAN / [4] COMPUTER";
             INC yt
@@ -509,10 +513,15 @@ PROCEDURE drawTitleScreen
 
         ENDIF
 
-        IF SCREEN WIDTH >= 160 THEN
+        INC yt
+
+        IF ( screenHeight >= 100 ) THEN
+
+            INC yt
+            INC yt
 
             ' Let's suggest to press the SPACE key to PLAY!
-            LOCATE 10,yt + 4: CENTER "[SPACE] TO PLAY"
+            LOCATE 10,yt: CENTER "[SPACE] TO PLAY"
 
         ELSE
 
@@ -522,6 +531,7 @@ PROCEDURE drawTitleScreen
         ENDIF
 
         INC yt
+        INC yt
 
         ' A loop to wait for a valid key.
         DO
@@ -530,23 +540,25 @@ PROCEDURE drawTitleScreen
 
             ' While waiting for a button to be pressed, 
             ' we offer a couple of informational messages.
-            IF ( SCREEN WIDTH >= 160 ) AND (TI-lastTiming) > 600 THEN
-                IF m == 0 THEN
-                    PEN CYAN
-                    LOCATE 1,yt: CENTER " SEE MORE GAMES AT "
-                    INC yt
-                    LOCATE 1,yt: CENTER "https://retroprogramming.iwashere.eu/"
-                    m = 1
-                ELSE
-                    PEN BLUE
-                    LOCATE 1,yt: CENTER "POWERED BY ugBASIC"
-                    INC yt
-                    LOCATE 1,yt: CENTER "     https://ugbasic.iwashere.eu/    "
-                    m = 0
+            IF ( screenHeight >= 100 ) THEN
+                IF (TI-lastTiming) > 600 THEN
+                    IF m == 0 THEN
+                        PEN CYAN
+                        LOCATE 1,yt: CENTER " SEE MORE GAMES AT "
+                        INC yt
+                        LOCATE 1,yt: CENTER "https://retroprogramming.iwashere.eu/"
+                        m = 1
+                    ELSE
+                        PEN BLUE
+                        LOCATE 1,yt: CENTER "POWERED BY ugBASIC"
+                        INC yt
+                        LOCATE 1,yt: CENTER "     https://ugbasic.iwashere.eu/    "
+                        m = 0
+                    ENDIF
+                    lastTiming = TI
                 ENDIF
-                lastTiming = TI
             ENDIF
-
+            
         UNTIL k<>""
 
         ' SPACE equals START GAME!
