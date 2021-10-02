@@ -153,10 +153,10 @@ CONST offsetHeight = ( SCREEN HEIGHT - ( rows * imageHeight ) ) / 2
 
 ' Offset of the main title
 CONST offsetTitleX = ( SCREEN WIDTH - IMAGE WIDTH(titleImage) ) / 2
-CONST offsetTitleY = ( SCREEN HEIGHT - IMAGE HEIGHT(titleImage) ) / 2
+CONST offsetTitleY = ( SCREEN HEIGHT - IMAGE HEIGHT(titleImage) - 2 * IMAGE HEIGHT(player1Image) - 4 * 8 ) / 2
 
 ' Offset of the main title (final)
-CONST offsetYTitle = offsetTitleY - (offsetTitleY/2) 
+CONST offsetYTitle = offsetTitleY 
 
 ' Precalculate offsets of arrows
 CONST arrowX2 = SCREEN WIDTH - IMAGE WIDTH(arrow1Image)
@@ -168,8 +168,8 @@ CONST offsetXPlayer2 = SCREEN WIDTH - IMAGE WIDTH(player1Image)
 
 ' Precalculate offsets of menu entries
 CONST offsetXMainMenu = ( offsetTitleX + IMAGE WIDTH(player1Image) ) / 8 + 6
-CONST offsetYMainMenu = offsetYTitle + 2 * IMAGE HEIGHT(titleImage) - (IMAGE HEIGHT(player1Image)/2)
-CONST offsetYMainMenu2 = offsetYMainMenu + 2 * IMAGE HEIGHT(player1Image)
+CONST offsetYMainMenu = offsetTitleY + IMAGE HEIGHT(titleImage) + 8
+CONST offsetYMainMenu2 = offsetYMainMenu + IMAGE HEIGHT(player1Image) + 8
 
 CONST screenHeight = SCREEN HEIGHT
 
@@ -471,20 +471,18 @@ PROCEDURE drawTitleScreen
         ' We design a different icon depending on whether 
         ' it is a human player or a computer (player 1).
         IF player1Type == human THEN
-            PUT IMAGE player1Image AT offsetTitleX - IMAGE WIDTH(player1Image), offsetYMainMenu
+            PUT IMAGE player1Image AT offsetTitleX - ( IMAGE WIDTH(player1Image) / 2 ), offsetYMainMenu
         ELSE
-            PUT IMAGE computer1Image AT offsetTitleX - IMAGE WIDTH(player1Image), offsetYMainMenu
+            PUT IMAGE computer1Image AT offsetTitleX - ( IMAGE WIDTH(computer1Image) / 2 ), offsetYMainMenu
         ENDIF
 
         IF ( screenHeight >= 100 ) THEN
 
             LOCATE offsetXMainMenu,yt: PRINT "[1] HUMAN / [2] COMPUTER";
-            INC yt
 
         ELSE
 
             LOCATE offsetXMainMenu,yt: PRINT "1=HUMAN 2=PC";
-            INC yt
 
         ENDIF
 
@@ -496,9 +494,9 @@ PROCEDURE drawTitleScreen
         ' We design a different icon depending on whether 
         ' it is a human player or a computer (player 2).
         IF player2Type == human THEN
-            PUT IMAGE player2Image AT offsetTitleX - IMAGE WIDTH(player1Image), offsetYMainMenu2
+            PUT IMAGE player2Image AT offsetTitleX - ( IMAGE WIDTH(player2Image) / 2 ), offsetYMainMenu2
         ELSE
-            PUT IMAGE computer2Image AT offsetTitleX - IMAGE WIDTH(player1Image), offsetYMainMenu2
+            PUT IMAGE computer2Image AT offsetTitleX  - ( IMAGE WIDTH(computer2Image) / 2 ), offsetYMainMenu2
         ENDIF
 
         IF ( screenHeight >= 100 ) THEN
@@ -514,10 +512,10 @@ PROCEDURE drawTitleScreen
         ENDIF
 
         INC yt
+        INC yt
 
         IF ( screenHeight >= 100 ) THEN
 
-            INC yt
             INC yt
 
             ' Let's suggest to press the SPACE key to PLAY!
@@ -545,14 +543,12 @@ PROCEDURE drawTitleScreen
                     IF m == 0 THEN
                         PEN CYAN
                         LOCATE 1,yt: CENTER " SEE MORE GAMES AT "
-                        INC yt
-                        LOCATE 1,yt: CENTER "https://retroprogramming.iwashere.eu/"
+                        LOCATE 1,yt+1: CENTER "https://retroprogramming.iwashere.eu/"
                         m = 1
                     ELSE
                         PEN BLUE
                         LOCATE 1,yt: CENTER "POWERED BY ugBASIC"
-                        INC yt
-                        LOCATE 1,yt: CENTER "     https://ugbasic.iwashere.eu/    "
+                        LOCATE 1,yt+1: CENTER "     https://ugbasic.iwashere.eu/    "
                         m = 0
                     ENDIF
                     lastTiming = TI
