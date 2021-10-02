@@ -310,13 +310,15 @@ PROCEDURE drawPlayfield
         PUT IMAGE computer2Image AT offsetXPlayer2, offsetYPlayers
     ENDIF
 
-    ' We characterize the player with his/her name.
-    PEN RED
-    LOCATE 6, 24: PRINT "PLAYER 1";
+    IF SCREEN WIDTH >= 160 THEN
+        ' We characterize the player with his/her name.
+        PEN RED
+        LOCATE 6, 24: PRINT "PLAYER 1";
 
-    PEN YELLOW
-    LOCATE 25, 24: PRINT "PLAYER 2";
-    
+        PEN YELLOW
+        LOCATE 25, 24: PRINT "PLAYER 2";
+    ENDIF
+
 END PROC
 
 ' This procedure is used to draw the arrow animation.
@@ -393,15 +395,17 @@ END PROC
 ' to indicate which player is currently playing.
 PROCEDURE drawPlayerStatus
 
-    ' The color RED for the first player 
-    ' and YELLOW for the second player.
-    IF currentPlayer == player1 THEN 
-        PEN RED
-    ELSE
-        PEN YELLOW
-    ENDIF
+    IF SCREEN WIDTH >= 160 THEN
+        ' The color RED for the first player 
+        ' and YELLOW for the second player.
+        IF currentPlayer == player1 THEN 
+            PEN RED
+        ELSE
+            PEN YELLOW
+        ENDIF
 
-    LOCATE 1, 5: CENTER "  1   2   3   4   5   6   7"
+        LOCATE 1, 5: CENTER "  1   2   3   4   5   6   7"
+    ENDIF
 
 END PROC
 
@@ -462,14 +466,22 @@ PROCEDURE drawTitleScreen
         ' We design a different icon depending on whether 
         ' it is a human player or a computer (player 1).
         IF player1Type == human THEN
-            PUT IMAGE player1Image AT offsetTitleX, offsetYMainMenu
+            PUT IMAGE player1Image AT offsetTitleX - IMAGE WIDTH(player1Image), offsetYMainMenu
         ELSE
-            PUT IMAGE computer1Image AT offsetTitleX, offsetYMainMenu
+            PUT IMAGE computer1Image AT offsetTitleX - IMAGE WIDTH(player1Image), offsetYMainMenu
         ENDIF
 
-        LOCATE offsetXMainMenu,yt: PRINT "[1] HUMAN / [2] COMPUTER";
-        INC yt
-        LOCATE offsetXMainMenu,yt: PRINT "";
+        IF SCREEN WIDTH >= 160 THEN
+
+            LOCATE offsetXMainMenu,yt: PRINT "[1] HUMAN / [2] COMPUTER";
+            INC yt
+
+        ELSE
+
+            LOCATE offsetXMainMenu,yt: PRINT "1=HUMAN 2=PC";
+            INC yt
+
+        ENDIF
 
         ' This is the next position from which to start writing.
         CONST offsetYMainMenu2 = offsetYMainMenu + 2 * IMAGE HEIGHT(player1Image)
@@ -480,17 +492,36 @@ PROCEDURE drawTitleScreen
         ' We design a different icon depending on whether 
         ' it is a human player or a computer (player 2).
         IF player2Type == human THEN
-            PUT IMAGE player2Image AT offsetTitleX, offsetYMainMenu2
+            PUT IMAGE player2Image AT offsetTitleX - IMAGE WIDTH(player1Image), offsetYMainMenu2
         ELSE
-            PUT IMAGE computer2Image AT offsetTitleX, offsetYMainMenu2
+            PUT IMAGE computer2Image AT offsetTitleX - IMAGE WIDTH(player1Image), offsetYMainMenu2
         ENDIF
 
-        LOCATE offsetXMainMenu,yt: PRINT "[3] HUMAN / [4] COMPUTER"
-        INC yt
-        LOCATE offsetXMainMenu,yt: PRINT ""
+        IF SCREEN WIDTH >= 160 THEN
 
-        ' Let's suggest to press the SPACE key to PLAY!
-        LOCATE 10,yt + 4: CENTER "[SPACE] TO PLAY"
+            LOCATE offsetXMainMenu,yt: PRINT "[3] HUMAN / [4] COMPUTER";
+            INC yt
+
+        ELSE
+
+            LOCATE offsetXMainMenu,yt: PRINT "3=HUMAN 4=PC";
+            INC yt
+
+        ENDIF
+
+        IF SCREEN WIDTH >= 160 THEN
+
+            ' Let's suggest to press the SPACE key to PLAY!
+            LOCATE 10,yt + 4: CENTER "[SPACE] TO PLAY"
+
+        ELSE
+
+            ' Let's suggest to press the SPACE key to PLAY!
+            LOCATE 10,yt: CENTER "[SPACE] TO PLAY"
+
+        ENDIF
+
+        INC yt
 
         ' A loop to wait for a valid key.
         DO
@@ -499,16 +530,18 @@ PROCEDURE drawTitleScreen
 
             ' While waiting for a button to be pressed, 
             ' we offer a couple of informational messages.
-            IF (TI-lastTiming) > 600 THEN
+            IF ( SCREEN WIDTH >= 160 ) AND (TI-lastTiming) > 600 THEN
                 IF m == 0 THEN
                     PEN CYAN
-                    LOCATE 1,22: CENTER " SEE MORE GAMES AT "
-                    LOCATE 1,23: CENTER "https://retroprogramming.iwashere.eu/"
+                    LOCATE 1,yt: CENTER " SEE MORE GAMES AT "
+                    INC yt
+                    LOCATE 1,yt: CENTER "https://retroprogramming.iwashere.eu/"
                     m = 1
                 ELSE
                     PEN BLUE
-                    LOCATE 1,22: CENTER "POWERED BY ugBASIC"
-                    LOCATE 1,23: CENTER "     https://ugbasic.iwashere.eu/    "
+                    LOCATE 1,yt: CENTER "POWERED BY ugBASIC"
+                    INC yt
+                    LOCATE 1,yt: CENTER "     https://ugbasic.iwashere.eu/    "
                     m = 0
                 ENDIF
                 lastTiming = TI
