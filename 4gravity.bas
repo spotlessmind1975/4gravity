@@ -189,7 +189,7 @@ POSITIVE CONST offsetXPlayer2 = SCREEN WIDTH - IMAGE WIDTH(player1Image)
 
 ' Precalculate offsets of menu entries
 CONST offsetXMainMenuPlayer IN (0,SCREEN WIDTH) = offsetTitleX - IF(offsetTitleX>( IMAGE WIDTH(player1Image) / 2 ), ( IMAGE WIDTH(player1Image) / 2 ), 0 )
-CONST offsetXMainMenu IN (0,SCREEN WIDTH) = ( offsetTitleX + IMAGE WIDTH(player1Image) ) / 8 + 6
+CONST offsetXMainMenu IN (0,SCREEN WIDTH) = ( ( offsetXMainMenuPlayer + IMAGE WIDTH( player1Image ) ) / 8 )
 CONST offsetYMainMenu IN (0,SCREEN HEIGHT) = offsetTitleY + IMAGE HEIGHT(titleImage) + 8
 CONST offsetYMainMenu2 IN (0,SCREEN HEIGHT)  = offsetYMainMenu + IMAGE HEIGHT(player1Image) + 8
 
@@ -443,6 +443,8 @@ PROCEDURE informationalMessages ON C64
     ' that the animation will always be at the same speed.
     SHARED lastTiming
 
+    yt = ( offsetYMainMenu / 8 ) + 5
+
     IF ( screenHeight >= 100 ) THEN
         IF (TI-lastTiming) > 600 THEN
             IF m == 0 THEN
@@ -538,14 +540,7 @@ PROCEDURE drawTitleScreen
 
         INC yt
         INC yt
-
-        IF ( screenHeight >= 100 ) THEN
-
-            INC yt
-
-        ELSE
-
-        ENDIF
+        INC yt
 
         ' Let's suggest to press the SPACE key to PLAY!
         LOCATE 10,yt: CENTER "[SPACE] TO PLAY"
