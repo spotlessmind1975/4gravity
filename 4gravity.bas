@@ -81,10 +81,6 @@ CONST player2 = 2
 CONST human = 1
 CONST computer = 2
 
-' Constant labels
-CONST player1Label = IF(SCREEN WIDTH >= 160, "PLAYER 1", "PLY1" )
-CONST player2Label = IF(SCREEN WIDTH >= 160, "PLAYER 2", "PLY2" )
-
 ' ============================================================================
 ' DATA SECTION
 ' ============================================================================
@@ -189,15 +185,19 @@ POSITIVE CONST offsetXPlayer2 = SCREEN WIDTH - IMAGE WIDTH(player1Image)
 
 ' Precalculate offsets of menu entries
 CONST offsetXMainMenuPlayer IN (0,SCREEN WIDTH) = offsetTitleX - IF(offsetTitleX>( IMAGE WIDTH(player1Image) / 2 ), ( IMAGE WIDTH(player1Image) / 2 ), 0 )
-CONST offsetXMainMenu IN (0,SCREEN WIDTH) = ( ( offsetXMainMenuPlayer + IMAGE WIDTH( player1Image ) ) / 8 )
+CONST offsetXMainMenu IN (0,SCREEN WIDTH) = ( ( offsetXMainMenuPlayer + IMAGE WIDTH( player1Image ) ) / FONT WIDTH ) + 2
 CONST offsetYMainMenu IN (0,SCREEN HEIGHT) = offsetTitleY + IMAGE HEIGHT(titleImage) + 8
 CONST offsetYMainMenu2 IN (0,SCREEN HEIGHT)  = offsetYMainMenu + IMAGE HEIGHT(player1Image) + 8
 
-CONST player1XLabel = IMAGE WIDTH( player1Image ) / 8
-CONST player2XLabel = ( ( SCREEN WIDTH - IMAGE WIDTH( player1Image ) ) / 8 ) - LEN( player2Label )
+' Constant labels
+CONST player1Label = IF(( SCREEN WIDTH >= 160) AND ( SCREEN HEIGHT >= 100 ), "PLAYER 1", "PLY1" )
+CONST player2Label = IF(( SCREEN WIDTH >= 160) AND ( SCREEN HEIGHT >= 100 ), "PLAYER 2", "PLY2" )
+
+CONST player1XLabel = ( IMAGE WIDTH( player1Image ) / FONT WIDTH ) + 1
+CONST player2XLabel = ( SCREEN TILES WIDTH - IMAGE WIDTH( player1Image ) / FONT WIDTH ) - LEN( player2Label ) - 1
 
 POSITIVE CONST screenHeight = SCREEN HEIGHT
-POSITIVE CONST lastLine = ( SCREEN HEIGHT / 8 ) - 1
+POSITIVE CONST lastLine = ( SCREEN HEIGHT / FONT HEIGHT ) - 1
 
 ' For commodity, all those variables are global:
 GLOBAL playfield, tokenX, tokenY, tokenC
@@ -342,7 +342,7 @@ PROCEDURE drawPlayfield
     IF player1Type == human THEN
         PUT IMAGE player1Image AT 0, offsetYPlayers
     ELSE
-        PUT IMAGE computer1Image AT 0, y
+        PUT IMAGE computer1Image AT 0, offsetYPlayers
     ENDIF
 
     IF player2Type == human THEN
@@ -351,6 +351,8 @@ PROCEDURE drawPlayfield
         PUT IMAGE computer2Image AT offsetXPlayer2, offsetYPlayers
     ENDIF
 
+    CALL drawPlayerNames
+    
 END PROC
 
 ' This procedure is used to draw the arrow animation.
@@ -447,7 +449,7 @@ PROCEDURE informationalMessages ON C64
     ' that the animation will always be at the same speed.
     SHARED lastTiming
 
-    yt = ( offsetYMainMenu / 8 ) + 5
+    yt = ( offsetYMainMenu / FONT HEIGHT ) + 8
 
     IF ( screenHeight >= 100 ) THEN
         IF (TI-lastTiming) > 600 THEN
@@ -515,7 +517,7 @@ PROCEDURE drawTitleScreen
         ' It corresponds to the lower edge of the title, 
         ' from which we move down to make room for the icons.
         ' We calculate manually the equivalend text position.
-        yt = offsetYMainMenu / 8
+        yt = offsetYMainMenu / FONT HEIGHT
 
         ' We design a different icon depending on whether 
         ' it is a human player or a computer (player 1).
@@ -530,7 +532,7 @@ PROCEDURE drawTitleScreen
         ' This is the next position from which to start writing.
         y = offsetYMainMenu2
         ' We calculate manually the equivalend text position.
-        yt = offsetYMainMenu2 / 8
+        yt = offsetYMainMenu2 / FONT HEIGHT
 
         ' We design a different icon depending on whether 
         ' it is a human player or a computer (player 2).
@@ -601,7 +603,7 @@ PROCEDURE drawFinalScreen[p]
 
     ' Calculate the position where to write
     y = offsetYTitle + 2 * IMAGE HEIGHT(titleImage)
-    yt = y / 8
+    yt = y / FONT HEIGHT
 
     ' Position the writing and...
     LOCATE 1,yt
