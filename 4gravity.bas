@@ -30,6 +30,18 @@
 ' ****************************************************************************/
 
 ' ============================================================================
+' COMPILER OPTIONS (in order to have more spare space)
+' ============================================================================
+
+' We ask to define at most 10 independent strings.
+' This will free about 1Kb
+DEFINE STRING COUNT 10
+
+' We ask to use at most 64 bytes for strings.
+' This will free about 2Kb
+DEFINE STRING SPACE 64
+
+' ============================================================================
 ' GAME CONSTANTS
 ' ============================================================================
 
@@ -68,6 +80,10 @@ CONST player2 = 2
 ' These are the constants used to distinguish between human and computer
 CONST human = 1
 CONST computer = 2
+
+' Constant labels
+CONST player1Label = "PLAYER 1"
+CONST player2Label = "PLAYER 2"
 
 ' ============================================================================
 ' DATA SECTION
@@ -125,6 +141,11 @@ BITMAP ENABLE (16)
 CLS
 COLOR BORDER BLACK
 
+' We must add constants on this point because only here we have
+' informations about graphical mode selected.
+CONST player1MenuLabel = IF(SCREEN HEIGHT >= 100, "[1] HUMAN / [2] COMPUTER", "1=HUMAN 2=PC")
+CONST player2MenuLabel = IF(SCREEN HEIGHT >= 100, "[3] HUMAN / [4] COMPUTER", "3=HUMAN 4=PC")
+
 ' Assign all the graphical resources. Note the use of ":=" direct assing
 ' operator. This is needed to avoid useless copies.
 titleImage := IMAGE LOAD("resources/title.png")
@@ -143,35 +164,36 @@ clearImage := IMAGE LOAD("resources/clear.png")
 ' Precalculate the width and the height of the various images.
 ' They are always of the same size, so it is sufficient to
 ' take the first image's dimensions.
-CONST imageWidth = IMAGE WIDTH(tokenAImage)
-CONST imageHeight = IMAGE HEIGHT(tokenAImage)
+POSITIVE CONST imageWidth = IMAGE WIDTH(tokenAImage)
+POSITIVE CONST imageHeight = IMAGE HEIGHT(tokenAImage)
 
 ' Precalculate offsets in order to put the playfield at the center
 ' of the screen.
-CONST offsetWidth = ( SCREEN WIDTH - ( columns * imageWidth ) ) / 2
-CONST offsetHeight = ( SCREEN HEIGHT - ( rows * imageHeight ) ) / 2
+POSITIVE CONST offsetWidth = ( SCREEN WIDTH - ( columns * imageWidth ) ) / 2
+POSITIVE CONST offsetHeight = ( SCREEN HEIGHT - ( rows * imageHeight ) ) / 2
 
 ' Offset of the main title
-CONST offsetTitleX = ( SCREEN WIDTH - IMAGE WIDTH(titleImage) ) / 2
-CONST offsetTitleY = ( SCREEN HEIGHT - IMAGE HEIGHT(titleImage) - 2 * IMAGE HEIGHT(player1Image) - 4 * 8 ) / 2
+POSITIVE CONST offsetTitleX = ( SCREEN WIDTH - IMAGE WIDTH(titleImage) ) / 2
+POSITIVE CONST offsetTitleY = ( SCREEN HEIGHT - IMAGE HEIGHT(titleImage) - 2 * IMAGE HEIGHT(player1Image) - 4 * 8 ) / 2
 
 ' Offset of the main title (final)
-CONST offsetYTitle = offsetTitleY 
+POSITIVE CONST offsetYTitle = offsetTitleY 
 
 ' Precalculate offsets of arrows
-CONST arrowX2 = SCREEN WIDTH - IMAGE WIDTH(arrow1Image)
-CONST arrowY = SCREEN HEIGHT - IMAGE HEIGHT(player1Image) - IMAGE HEIGHT(arrow1Image)
+POSITIVE CONST arrowX2 = SCREEN WIDTH - IMAGE WIDTH(arrow1Image)
+POSITIVE CONST arrowY = SCREEN HEIGHT - IMAGE HEIGHT(player1Image) - IMAGE HEIGHT(arrow1Image)
 
 ' Precalculate offsets of players
-CONST offsetYPlayers = SCREEN HEIGHT - IMAGE HEIGHT(player1Image)
-CONST offsetXPlayer2 = SCREEN WIDTH - IMAGE WIDTH(player1Image)
+POSITIVE CONST offsetYPlayers = SCREEN HEIGHT - IMAGE HEIGHT(player1Image)
+POSITIVE CONST offsetXPlayer2 = SCREEN WIDTH - IMAGE WIDTH(player1Image)
 
 ' Precalculate offsets of menu entries
-CONST offsetXMainMenu = ( offsetTitleX + IMAGE WIDTH(player1Image) ) / 8 + 6
-CONST offsetYMainMenu = offsetTitleY + IMAGE HEIGHT(titleImage) + 8
-CONST offsetYMainMenu2 = offsetYMainMenu + IMAGE HEIGHT(player1Image) + 8
+CONST offsetXMainMenuPlayerv IN (0,SCREEN WIDTH) = offsetTitleX - IF(offsetTitleX>( IMAGE WIDTH(player1Image) / 2 ), ( IMAGE WIDTH(player1Image) / 2 ), 0 )
+CONST offsetXMainMenu IN (0,SCREEN WIDTH) = ( offsetTitleX + IMAGE WIDTH(player1Image) ) / 8 + 6
+CONST offsetYMainMenu IN (0,SCREEN HEIGHT) = offsetTitleY + IMAGE HEIGHT(titleImage) + 8
+CONST offsetYMainMenu2 IN (0,SCREEN HEIGHT)  = offsetYMainMenu + IMAGE HEIGHT(player1Image) + 8
 
-CONST screenHeight = SCREEN HEIGHT
+POSITIVE CONST screenHeight = SCREEN HEIGHT
 
 ' For commodity, all those variables are global:
 GLOBAL playfield, tokenX, tokenY, tokenC
@@ -225,7 +247,6 @@ PROCEDURE gameInit
     ' Reset the arrow animation.
     arrow = # 0
     arrowDirection = # 1
-
 
 END PROC
 
@@ -318,10 +339,10 @@ PROCEDURE drawPlayfield
     IF ( screenHeight >= 100 ) THEN
         ' We characterize the player with his/her name.
         PEN RED
-        LOCATE 6, 24: PRINT "PLAYER 1";
+        LOCATE 6, 24: PRINT player1Label;
 
         PEN YELLOW
-        LOCATE 25, 24: PRINT "PLAYER 2";
+        LOCATE 25, 24: PRINT player2Label;
     ENDIF
 
 END PROC
@@ -414,17 +435,39 @@ PROCEDURE drawPlayerStatus
 
 END PROC
 
-' This procedure deals with designing the initial screen, 
-' including the menu with which the player can choose the 
-' game mode (two human players, player against computer, 
-' computer against computer).
-PROCEDURE drawTitleScreen
+PROCEDURE informationalMessages ON C64
 
     ' To ensure a constant speed animation of informational
     ' title, we memorize the moment in time when we drew the 
     ' last informational title. By doing so, we ensure 
     ' that the animation will always be at the same speed.
     SHARED lastTiming
+
+    IF ( screenHeight >= 100 ) THEN
+        IF (TI-lastTiming) > 600 THEN
+            IF m == 0 THEN
+                PEN CYAN
+                LOCATE 1,yt: CENTER " SEE MORE GAMES AT "
+                LOCATE 1,yt+1: CENTER "https://retroprogramming.iwashere.eu/"
+                m = 1
+            ELSE
+                PEN BLUE
+                LOCATE 1,yt: CENTER "POWERED BY ugBASIC"
+                LOCATE 1,yt+1: CENTER "     https://ugbasic.iwashere.eu/    "
+                m = 0
+            ENDIF
+            lastTiming = TI
+        ENDIF
+    ENDIF
+
+END PROC
+
+
+' This procedure deals with designing the initial screen, 
+' including the menu with which the player can choose the 
+' game mode (two human players, player against computer, 
+' computer against computer).
+PROCEDURE drawTitleScreen
 
     ' Take note of which informational message we are
     ' going to show (0 = see more games; 1 = ugbasic)
@@ -471,20 +514,12 @@ PROCEDURE drawTitleScreen
         ' We design a different icon depending on whether 
         ' it is a human player or a computer (player 1).
         IF player1Type == human THEN
-            PUT IMAGE player1Image AT offsetTitleX - ( IMAGE WIDTH(player1Image) / 2 ), offsetYMainMenu
+            PUT IMAGE player1Image AT offsetXMainMenuPlayer, offsetYMainMenu
         ELSE
-            PUT IMAGE computer1Image AT offsetTitleX - ( IMAGE WIDTH(computer1Image) / 2 ), offsetYMainMenu
+            PUT IMAGE computer1Image AT offsetXMainMenuPlayer, offsetYMainMenu
         ENDIF
 
-        IF ( screenHeight >= 100 ) THEN
-
-            LOCATE offsetXMainMenu,yt: PRINT "[1] HUMAN / [2] COMPUTER";
-
-        ELSE
-
-            LOCATE offsetXMainMenu,yt: PRINT "1=HUMAN 2=PC";
-
-        ENDIF
+        LOCATE offsetXMainMenu,yt: PRINT player1MenuLabel;
 
         ' This is the next position from which to start writing.
         y = offsetYMainMenu2
@@ -494,22 +529,12 @@ PROCEDURE drawTitleScreen
         ' We design a different icon depending on whether 
         ' it is a human player or a computer (player 2).
         IF player2Type == human THEN
-            PUT IMAGE player2Image AT offsetTitleX - ( IMAGE WIDTH(player2Image) / 2 ), offsetYMainMenu2
+            PUT IMAGE player2Image AT offsetXMainMenuPlayer, offsetYMainMenu2
         ELSE
-            PUT IMAGE computer2Image AT offsetTitleX  - ( IMAGE WIDTH(computer2Image) / 2 ), offsetYMainMenu2
+            PUT IMAGE computer2Image AT offsetXMainMenuPlayer, offsetYMainMenu2
         ENDIF
 
-        IF ( screenHeight >= 100 ) THEN
-
-            LOCATE offsetXMainMenu,yt: PRINT "[3] HUMAN / [4] COMPUTER";
-            INC yt
-
-        ELSE
-
-            LOCATE offsetXMainMenu,yt: PRINT "3=HUMAN 4=PC";
-            INC yt
-
-        ENDIF
+        LOCATE offsetXMainMenu,yt: PRINT player2MenuLabel;
 
         INC yt
         INC yt
@@ -518,15 +543,12 @@ PROCEDURE drawTitleScreen
 
             INC yt
 
-            ' Let's suggest to press the SPACE key to PLAY!
-            LOCATE 10,yt: CENTER "[SPACE] TO PLAY"
-
         ELSE
 
-            ' Let's suggest to press the SPACE key to PLAY!
-            LOCATE 10,yt: CENTER "[SPACE] TO PLAY"
-
         ENDIF
+
+        ' Let's suggest to press the SPACE key to PLAY!
+        LOCATE 10,yt: CENTER "[SPACE] TO PLAY"
 
         INC yt
         INC yt
@@ -538,23 +560,12 @@ PROCEDURE drawTitleScreen
 
             ' While waiting for a button to be pressed, 
             ' we offer a couple of informational messages.
-            IF ( screenHeight >= 100 ) THEN
-                IF (TI-lastTiming) > 600 THEN
-                    IF m == 0 THEN
-                        PEN CYAN
-                        LOCATE 1,yt: CENTER " SEE MORE GAMES AT "
-                        LOCATE 1,yt+1: CENTER "https://retroprogramming.iwashere.eu/"
-                        m = 1
-                    ELSE
-                        PEN BLUE
-                        LOCATE 1,yt: CENTER "POWERED BY ugBASIC"
-                        LOCATE 1,yt+1: CENTER "     https://ugbasic.iwashere.eu/    "
-                        m = 0
-                    ENDIF
-                    lastTiming = TI
-                ENDIF
+            CALL informationalMessages
+
+            IF k == " " THEN
+                PUT IMAGE computer2Image AT offsetXMainMenuPlayer, offsetYMainMenu2
             ENDIF
-            
+
         UNTIL k<>""
 
         ' SPACE equals START GAME!
@@ -575,6 +586,8 @@ PROCEDURE drawTitleScreen
                 player2Type = computer
             ENDIF
         ENDIF
+
+        NOP
 
     UNTIL done
 
@@ -618,7 +631,7 @@ PROCEDURE drawFinalScreen[p]
 
     ENDIF
 
-    ' Suggest to press any key to start.
+    ' ' Suggest to press any key to start.
     LOCATE 10,yt + 4: CENTER "*ANY KEY* TO CONTINUE"
 
     WAIT KEY
