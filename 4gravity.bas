@@ -194,6 +194,7 @@ CONST offsetYMainMenu IN (0,SCREEN HEIGHT) = offsetTitleY + IMAGE HEIGHT(titleIm
 CONST offsetYMainMenu2 IN (0,SCREEN HEIGHT)  = offsetYMainMenu + IMAGE HEIGHT(player1Image) + 8
 
 POSITIVE CONST screenHeight = SCREEN HEIGHT
+POSITIVE CONST lastLine = ( SCREEN HEIGHT / 8 ) - 1
 
 ' For commodity, all those variables are global:
 GLOBAL playfield, tokenX, tokenY, tokenC
@@ -339,10 +340,10 @@ PROCEDURE drawPlayfield
     IF ( screenHeight >= 100 ) THEN
         ' We characterize the player with his/her name.
         PEN RED
-        LOCATE 6, 24: PRINT player1Label;
+        LOCATE 6, lastLine: PRINT player1Label;
 
         PEN YELLOW
-        LOCATE 25, 24: PRINT player2Label;
+        LOCATE 25, lastLine: PRINT player2Label;
     ENDIF
 
 END PROC
@@ -561,10 +562,6 @@ PROCEDURE drawTitleScreen
             ' While waiting for a button to be pressed, 
             ' we offer a couple of informational messages.
             CALL informationalMessages
-
-            IF k == " " THEN
-                PUT IMAGE computer2Image AT offsetXMainMenuPlayer, offsetYMainMenu2
-            ENDIF
 
         UNTIL k<>""
 
