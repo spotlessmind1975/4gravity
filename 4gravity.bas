@@ -82,8 +82,8 @@ CONST human = 1
 CONST computer = 2
 
 ' Constant labels
-CONST player1Label = "PLAYER 1"
-CONST player2Label = "PLAYER 2"
+CONST player1Label = IF(SCREEN WIDTH >= 160, "PLAYER 1", "PLY1" )
+CONST player2Label = IF(SCREEN WIDTH >= 160, "PLAYER 2", "PLY2" )
 
 ' ============================================================================
 ' DATA SECTION
@@ -143,8 +143,8 @@ COLOR BORDER BLACK
 
 ' We must add constants on this point because only here we have
 ' informations about graphical mode selected.
-CONST player1MenuLabel = IF(SCREEN HEIGHT >= 100, "[1] HUMAN / [2] COMPUTER", "1=HUMAN 2=PC")
-CONST player2MenuLabel = IF(SCREEN HEIGHT >= 100, "[3] HUMAN / [4] COMPUTER", "3=HUMAN 4=PC")
+CONST player1MenuLabel = IF(SCREEN WIDTH >= 160, "[1] HUMAN / [2] COMPUTER", "1=HUMAN 2=PC")
+CONST player2MenuLabel = IF(SCREEN WIDTH >= 160, "[3] HUMAN / [4] COMPUTER", "3=HUMAN 4=PC")
 
 ' Assign all the graphical resources. Note the use of ":=" direct assing
 ' operator. This is needed to avoid useless copies.
@@ -188,10 +188,13 @@ POSITIVE CONST offsetYPlayers = SCREEN HEIGHT - IMAGE HEIGHT(player1Image)
 POSITIVE CONST offsetXPlayer2 = SCREEN WIDTH - IMAGE WIDTH(player1Image)
 
 ' Precalculate offsets of menu entries
-CONST offsetXMainMenuPlayerv IN (0,SCREEN WIDTH) = offsetTitleX - IF(offsetTitleX>( IMAGE WIDTH(player1Image) / 2 ), ( IMAGE WIDTH(player1Image) / 2 ), 0 )
+CONST offsetXMainMenuPlayer IN (0,SCREEN WIDTH) = offsetTitleX - IF(offsetTitleX>( IMAGE WIDTH(player1Image) / 2 ), ( IMAGE WIDTH(player1Image) / 2 ), 0 )
 CONST offsetXMainMenu IN (0,SCREEN WIDTH) = ( offsetTitleX + IMAGE WIDTH(player1Image) ) / 8 + 6
 CONST offsetYMainMenu IN (0,SCREEN HEIGHT) = offsetTitleY + IMAGE HEIGHT(titleImage) + 8
 CONST offsetYMainMenu2 IN (0,SCREEN HEIGHT)  = offsetYMainMenu + IMAGE HEIGHT(player1Image) + 8
+
+CONST player1XLabel = IMAGE WIDTH( player1Image ) / 8
+CONST player2XLabel = ( ( SCREEN WIDTH - IMAGE WIDTH( player1Image ) ) / 8 ) - LEN( player2Label )
 
 POSITIVE CONST screenHeight = SCREEN HEIGHT
 POSITIVE CONST lastLine = ( SCREEN HEIGHT / 8 ) - 1
@@ -337,14 +340,12 @@ PROCEDURE drawPlayfield
         PUT IMAGE computer2Image AT offsetXPlayer2, offsetYPlayers
     ENDIF
 
-    IF ( screenHeight >= 100 ) THEN
-        ' We characterize the player with his/her name.
-        PEN RED
-        LOCATE 6, lastLine: PRINT player1Label;
+    ' We characterize the player with his/her name.
+    PEN RED
+    LOCATE player1XLabel, lastLine: PRINT player1Label;
 
-        PEN YELLOW
-        LOCATE 25, lastLine: PRINT player2Label;
-    ENDIF
+    PEN YELLOW
+    LOCATE player2XLabel, lastLine: PRINT player2Label;
 
 END PROC
 
@@ -420,19 +421,17 @@ END PROC
 
 ' This procedure updates the color of the numbers above the columns 
 ' to indicate which player is currently playing.
-PROCEDURE drawPlayerStatus
+PROCEDURE drawPlayerStatus ON C64
 
-    IF ( screenHeight >= 100 ) THEN
-        ' The color RED for the first player 
-        ' and YELLOW for the second player.
-        IF currentPlayer == player1 THEN 
-            PEN RED
-        ELSE
-            PEN YELLOW
-        ENDIF
-
-        LOCATE 1, 5: CENTER "  1   2   3   4   5   6   7"
+    ' The color RED for the first player 
+    ' and YELLOW for the second player.
+    IF currentPlayer == player1 THEN 
+        PEN RED
+    ELSE
+        PEN YELLOW
     ENDIF
+
+    LOCATE 1, 5: CENTER "  1   2   3   4   5   6   7"
 
 END PROC
 
