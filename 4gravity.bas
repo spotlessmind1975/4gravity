@@ -296,6 +296,17 @@ PROCEDURE drawMovingToken[t]
 
 END PROC
 
+PROCEDURE drawPlayerNames ON C64, DRAGON
+
+    ' We characterize the player with his/her name.
+    PEN RED
+    LOCATE player1XLabel, lastLine: PRINT player1Label;
+
+    PEN YELLOW
+    LOCATE player2XLabel, lastLine: PRINT player2Label;
+
+END PROC
+
 ' This procedure is used to draw the game plan. 
 ' As it is drawn only once, it is a very 
 ' simple routine.
@@ -339,13 +350,6 @@ PROCEDURE drawPlayfield
     ELSE
         PUT IMAGE computer2Image AT offsetXPlayer2, offsetYPlayers
     ENDIF
-
-    ' We characterize the player with his/her name.
-    PEN RED
-    LOCATE player1XLabel, lastLine: PRINT player1Label;
-
-    PEN YELLOW
-    LOCATE player2XLabel, lastLine: PRINT player2Label;
 
 END PROC
 
