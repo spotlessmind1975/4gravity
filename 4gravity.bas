@@ -37,9 +37,9 @@
 ' This will free about 1Kb
 DEFINE STRING COUNT 10
 
-' We ask to use at most 64 bytes for strings.
+' We ask to use at most 128 bytes for strings.
 ' This will free about 2Kb
-DEFINE STRING SPACE 64
+DEFINE STRING SPACE 128
 
 ' ============================================================================
 ' GAME CONSTANTS
