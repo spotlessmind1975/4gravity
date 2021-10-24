@@ -139,8 +139,8 @@ COLOR BORDER BLACK
 
 ' We must add constants on this point because only here we have
 ' informations about graphical mode selected.
-CONST player1MenuLabel = IF(( SCREEN WIDTH >= 160) AND ( SCREEN HEIGHT >= 100 ) , "[1] HUMAN / [2] COMPUTER", "1=HUMAN 2=PC")
-CONST player2MenuLabel = IF(( SCREEN WIDTH >= 160) AND ( SCREEN HEIGHT >= 100 ), "[3] HUMAN / [4] COMPUTER", "3=HUMAN 4=PC")
+CONST player1MenuLabel = IF(( SCREEN WIDTH > 160) AND ( SCREEN HEIGHT >= 100 ) , "[1] HUMAN / [2] COMPUTER", "1=HUMAN 2=PC")
+CONST player2MenuLabel = IF(( SCREEN WIDTH > 160) AND ( SCREEN HEIGHT >= 100 ), "[3] HUMAN / [4] COMPUTER", "3=HUMAN 4=PC")
 
 ' Assign all the graphical resources. Note the use of ":=" direct assing
 ' operator. This is needed to avoid useless copies.
