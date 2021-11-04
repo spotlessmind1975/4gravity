@@ -142,8 +142,8 @@ COLOR BORDER BLACK
 
 ' We must add constants on this point because only here we have
 ' informations about graphical mode selected.
-CONST player1MenuLabel = IF(( SCREEN WIDTH > 160) AND ( SCREEN HEIGHT >= 100 ) , "[1] HUMAN / [2] COMPUTER", "1=HUMAN 2=PC")
-CONST player2MenuLabel = IF(( SCREEN WIDTH > 160) AND ( SCREEN HEIGHT >= 100 ), "[3] HUMAN / [4] COMPUTER", "3=HUMAN 4=PC")
+CONST player1MenuLabel = IF(( SCREEN WIDTH > 160), IF(( SCREEN HEIGHT >= 200 ),"[1] HUMAN / [2] COMPUTER","1=HUMAN 2=PC"), "1=HUMAN 2=PC")
+CONST player2MenuLabel = IF(( SCREEN WIDTH > 160), IF(( SCREEN HEIGHT >= 200 ),"[3] HUMAN / [4] COMPUTER","3=HUMAN 4=PC"), "3=HUMAN 4=PC")
 
 ' Assign all the graphical resources. Note the use of ":=" direct assing
 ' operator. This is needed to avoid useless copies.
@@ -172,9 +172,6 @@ POSITIVE CONST offsetWidth = ( SCREEN WIDTH - ( columns * imageWidth ) ) / 2
 POSITIVE CONST offsetHeight = ( SCREEN HEIGHT - ( rows * imageHeight ) ) / 2
 
 ' Offset of the main title
-CONST xxx = SCREEN WIDTH
-CONST yyy = IMAGE WIDTH(titleImage)
-
 POSITIVE CONST offsetTitleX = ( SCREEN WIDTH - IMAGE WIDTH(titleImage) ) / 2
 POSITIVE CONST offsetTitleY = ( SCREEN HEIGHT - IMAGE HEIGHT(titleImage) - 2 * IMAGE HEIGHT(player1Image) - 4 * 8 ) / 2
 
@@ -823,6 +820,9 @@ END PROC
 ' position. This is partial information, which however tells us 
 ' if the last move was successful.
 PROCEDURE countTokensOfAColorFromXYOnDirection[c AS BYTE, x AS BYTE, y AS BYTE, dx AS BYTE, dy AS BYTE]
+
+    cx = (BYTE) 0
+    cy = (BYTE) 0
 
     ' Center of counting
     cx = x
