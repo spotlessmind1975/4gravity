@@ -108,20 +108,23 @@ VAR lastUsedToken AS BYTE = unusedToken
 VAR lastUsedColumn AS BYTE = unusedToken
 
 ' This variable store the player that must current play
-currentPlayer = player1
+VAR currentPlayer AS BYTE = player1
 
 ' This variable store the player that must current wait
-previousPlayer = player2
+VAR previousPlayer AS BYTE = player2
 
 ' This variable store if the player1 is an human or a computer
-player1Type = human
+VAR player1Type AS BYTE = human
 
 ' This variable store if the player2 is an human or a computer
-player2Type = human
+VAR player2Type AS BYTE = human
 
 ' This variable store the current frame for arrow and direction
-arrow = 0
-arrowDirection = 1
+VAR arrow AS BYTE = 0
+VAR arrowDirection AS BYTE = 1
+
+' This variable store which player won the game
+VAR playerWon AS BYTE = noPlayer
 
 ' ============================================================================
 ' CODE SECTION
@@ -169,6 +172,9 @@ POSITIVE CONST offsetWidth = ( SCREEN WIDTH - ( columns * imageWidth ) ) / 2
 POSITIVE CONST offsetHeight = ( SCREEN HEIGHT - ( rows * imageHeight ) ) / 2
 
 ' Offset of the main title
+CONST xxx = SCREEN WIDTH
+CONST yyy = IMAGE WIDTH(titleImage)
+
 POSITIVE CONST offsetTitleX = ( SCREEN WIDTH - IMAGE WIDTH(titleImage) ) / 2
 POSITIVE CONST offsetTitleY = ( SCREEN HEIGHT - IMAGE HEIGHT(titleImage) - 2 * IMAGE HEIGHT(player1Image) - 4 * 8 ) / 2
 
@@ -208,7 +214,7 @@ GLOBAL arrow1Image, arrow2Image, arrow3Image
 GLOBAL computer1Image, computer2Image
 GLOBAL arrow, arrowDirection
 GLOBAL clearImage
-GLOBAL player1Type, player2Type
+GLOBAL player1Type, player2Type, playerWon
 
 ' ----------------------------------------------------------------------------
 ' --- GRAPHICAL PROCEDURES
@@ -255,7 +261,7 @@ PROCEDURE gameInit
 END PROC
 
 ' This method is able to draw the movement of a single token.
-PROCEDURE drawMovingToken[t]
+PROCEDURE drawMovingToken[t AS BYTE]
 
     ' Let's take coordinates of the token and the token type.
     x = tokenX(t)
@@ -591,7 +597,7 @@ PROCEDURE drawTitleScreen
 END PROC
 
 ' This procedure deals with designing the final screen.
-PROCEDURE drawFinalScreen[p]
+PROCEDURE drawFinalScreen[p AS BYTE]
 
     ' Clear the screen
     CLS
@@ -640,7 +646,7 @@ END PROC
 ' ' ----------------------------------------------------------------------------
 
 ' This procedure will move the token by one step down.
-PROCEDURE moveTokenDown[t]
+PROCEDURE moveTokenDown[t AS BYTE]
 
     ' Let's take coordinates of the token and the token type.
     x = tokenX(t)
@@ -670,7 +676,7 @@ END PROC
 ' This procedure will check if there are the conditions
 ' to move down a token by one cell. If so, it will move
 ' the token down by one step.
-PROCEDURE moveToken[t]
+PROCEDURE moveToken[t AS BYTE]
 
     ' The token cannot be moved if it is not currently used.    
     EXIT PROC WITH FALSE IF t > lastUsedToken
@@ -721,7 +727,7 @@ PROCEDURE moveTokens
 END PROC
 
 ' This procedure will put (if possible) a token on the playfield.
-PROCEDURE putTokenAt[x,c]
+PROCEDURE putTokenAt[x AS BYTE, c AS BYTE]
     
     ' No more token available, so... exit!
     EXIT PROC WITH FALSE IF lastUsedToken == tokens
@@ -757,16 +763,16 @@ END PROC
 ' This is the common procedure between the computer and the human player. 
 ' The aim is to check if there is a possibility to put a token.
 ' Of course, he also takes care of changing players if that happens.
-PROCEDURE pollToken[x]
+PROCEDURE pollToken[x AS BYTE]
 
     IF currentPlayer == player1 THEN
         actualTokenType = tokenA
-        nextPlayer = player2
-        previousPlayer = player1
+        nextPlayer = # player2
+        previousPlayer = # player1
     ELSE
         actualTokenType = tokenB
-        nextPlayer = player1
-        previousPlayer = player2
+        nextPlayer = # player1
+        previousPlayer = # player2
     ENDIF
 
     IF putTokenAt[(x-1),actualTokenType] THEN
@@ -816,7 +822,7 @@ END PROC
 ' color there are along a certain line, starting from a specific 
 ' position. This is partial information, which however tells us 
 ' if the last move was successful.
-PROCEDURE countTokensOfAColorFromXYOnDirection[c,x,y,dx,dy]
+PROCEDURE countTokensOfAColorFromXYOnDirection[c AS BYTE, x AS BYTE, y AS BYTE, dx AS BYTE, dy AS BYTE]
 
     ' Center of counting
     cx = x
@@ -939,7 +945,7 @@ BEGIN GAMELOOP
     CALL drawPlayfield
 
     ' When the game start, nobody wins.    
-    playerWon = noPlayer
+    playerWon = # noPlayer
 
     ' We repeat this loop until someone has won 
     ' (or all the tokens are gone!).
