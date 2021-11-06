@@ -142,8 +142,8 @@ COLOR BORDER BLACK
 
 ' We must add constants on this point because only here we have
 ' informations about graphical mode selected.
-CONST player1MenuLabel = IF(( SCREEN WIDTH > 160), IF(( SCREEN HEIGHT >= 200 ),"[1] HUMAN / [2] COMPUTER","1=HUMAN 2=PC"), "1=HUMAN 2=PC")
-CONST player2MenuLabel = IF(( SCREEN WIDTH > 160), IF(( SCREEN HEIGHT >= 200 ),"[3] HUMAN / [4] COMPUTER","3=HUMAN 4=PC"), "3=HUMAN 4=PC")
+CONST player1MenuLabel = IF(( SCREEN WIDTH >= 160), IF(( SCREEN HEIGHT >= 200 ),"[1] HUMAN / [2] COMPUTER","1=HUMAN 2=PC"), "1=HUMAN 2=PC")
+CONST player2MenuLabel = IF(( SCREEN WIDTH >= 160), IF(( SCREEN HEIGHT >= 200 ),"[3] HUMAN / [4] COMPUTER","3=HUMAN 4=PC"), "3=HUMAN 4=PC")
 
 ' Assign all the graphical resources. Note the use of ":=" direct assing
 ' operator. This is needed to avoid useless copies.
@@ -258,7 +258,7 @@ PROCEDURE gameInit
 END PROC
 
 ' This method is able to draw the movement of a single token.
-PROCEDURE drawMovingToken[t AS BYTE]
+PROCEDURE drawMovingToken[t]
 
     ' Let's take coordinates of the token and the token type.
     x = tokenX(t)
@@ -587,14 +587,12 @@ PROCEDURE drawTitleScreen
             ENDIF
         ENDIF
 
-        NOP
-
     UNTIL done
 
 END PROC
 
 ' This procedure deals with designing the final screen.
-PROCEDURE drawFinalScreen[p AS BYTE]
+PROCEDURE drawFinalScreen[p]
 
     ' Clear the screen
     CLS
@@ -643,7 +641,7 @@ END PROC
 ' ' ----------------------------------------------------------------------------
 
 ' This procedure will move the token by one step down.
-PROCEDURE moveTokenDown[t AS BYTE]
+PROCEDURE moveTokenDown[t]
 
     ' Let's take coordinates of the token and the token type.
     x = tokenX(t)
@@ -673,7 +671,7 @@ END PROC
 ' This procedure will check if there are the conditions
 ' to move down a token by one cell. If so, it will move
 ' the token down by one step.
-PROCEDURE moveToken[t AS BYTE]
+PROCEDURE moveToken[t]
 
     ' The token cannot be moved if it is not currently used.    
     EXIT PROC WITH FALSE IF t > lastUsedToken
@@ -724,7 +722,7 @@ PROCEDURE moveTokens
 END PROC
 
 ' This procedure will put (if possible) a token on the playfield.
-PROCEDURE putTokenAt[x AS BYTE, c AS BYTE]
+PROCEDURE putTokenAt[x, c]
     
     ' No more token available, so... exit!
     EXIT PROC WITH FALSE IF lastUsedToken == tokens
@@ -760,7 +758,7 @@ END PROC
 ' This is the common procedure between the computer and the human player. 
 ' The aim is to check if there is a possibility to put a token.
 ' Of course, he also takes care of changing players if that happens.
-PROCEDURE pollToken[x AS BYTE]
+PROCEDURE pollToken[x]
 
     IF currentPlayer == player1 THEN
         actualTokenType = tokenA
@@ -819,10 +817,7 @@ END PROC
 ' color there are along a certain line, starting from a specific 
 ' position. This is partial information, which however tells us 
 ' if the last move was successful.
-PROCEDURE countTokensOfAColorFromXYOnDirection[c AS BYTE, x AS BYTE, y AS BYTE, dx AS BYTE, dy AS BYTE]
-
-    cx = (BYTE) 0
-    cy = (BYTE) 0
+PROCEDURE countTokensOfAColorFromXYOnDirection[c, x, y, dx, dy]
 
     ' Center of counting
     cx = x
@@ -838,7 +833,7 @@ PROCEDURE countTokensOfAColorFromXYOnDirection[c AS BYTE, x AS BYTE, y AS BYTE, 
         ' Is cell occupied by a different token type
         ' or it is empty? Let's stop counting!
         IF playfield(cx,cy) <> c THEN
-            RETURN t
+            EXIT
         ENDIF
 
         ' Let's increment the number of tokens.
