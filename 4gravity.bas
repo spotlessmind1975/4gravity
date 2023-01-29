@@ -35,11 +35,11 @@
 
 ' We ask to define at most 10 independent strings.
 ' This will free about 1Kb
-DEFINE STRING COUNT 10
+DEFINE STRING COUNT 16
 
 ' We ask to use at most 128 bytes for strings.
 ' This will free about 2Kb
-DEFINE STRING SPACE 128
+DEFINE STRING SPACE 256
 
 ' ============================================================================
 ' GAME CONSTANTS
@@ -142,8 +142,8 @@ COLOR BORDER BLACK
 
 ' We must add constants on this point because only here we have
 ' informations about graphical mode selected.
-CONST player1MenuLabel = IF(( SCREEN WIDTH >= 160), IF(( SCREEN HEIGHT >= 200 ),"[1] HUMAN / [2] COMPUTER","1=HUMAN 2=PC"), "1=HUMAN 2=PC")
-CONST player2MenuLabel = IF(( SCREEN WIDTH >= 160), IF(( SCREEN HEIGHT >= 200 ),"[3] HUMAN / [4] COMPUTER","3=HUMAN 4=PC"), "3=HUMAN 4=PC")
+CONST player1MenuLabel = IF(( SCREEN WIDTH > 160), IF(( SCREEN HEIGHT > 200 ),"[1] HUMAN / [2] COMPUTER","1=HUMAN 2=PC"), "1=HUMAN 2=PC")
+CONST player2MenuLabel = IF(( SCREEN WIDTH > 160), IF(( SCREEN HEIGHT > 200 ),"[3] HUMAN / [4] COMPUTER","3=HUMAN 4=PC"), "3=HUMAN 4=PC")
 
 ' Assign all the graphical resources. Note the use of ":=" direct assing
 ' operator. This is needed to avoid useless copies.
@@ -258,7 +258,7 @@ PROCEDURE gameInit
 END PROC
 
 ' This method is able to draw the movement of a single token.
-PROCEDURE drawMovingToken[t]
+PROCEDURE drawMovingToken[t AS BYTE]
 
     ' Let's take coordinates of the token and the token type.
     x = tokenX(t)
@@ -502,15 +502,15 @@ PROCEDURE drawTitleScreen
     ' Draw the title ("4 GRAVITY!")
     PUT IMAGE titleImage AT offsetTitleX, y
 
-    ' Clear the keyboard buffer, in order to avoid to
-    ' detect any WAIT KEY key press as a key pressed.
+    ' ' Clear the keyboard buffer, in order to avoid to
+    ' ' detect any WAIT KEY key press as a key pressed.
     CLEAR KEY
 
-    ' Let's define the variable that will wait for a key press.
+    ' ' Let's define the variable that will wait for a key press.
     k = ""
 
-    ' Here we start a loop where we will stay until the player 
-    ' has pressed the SPACE key.
+    ' ' Here we start a loop where we will stay until the player 
+    ' ' has pressed the SPACE key.
     REPEAT
 
         ' The main color of the writing will be white.
@@ -558,7 +558,7 @@ PROCEDURE drawTitleScreen
         INC yt
 
         ' A loop to wait for a valid key.
-        DO
+        REPEAT
 
             k = INKEY$
 
@@ -592,7 +592,7 @@ PROCEDURE drawTitleScreen
 END PROC
 
 ' This procedure deals with designing the final screen.
-PROCEDURE drawFinalScreen[p]
+PROCEDURE drawFinalScreen[p AS BYTE]
 
     ' Clear the screen
     CLS
@@ -641,7 +641,7 @@ END PROC
 ' ' ----------------------------------------------------------------------------
 
 ' This procedure will move the token by one step down.
-PROCEDURE moveTokenDown[t]
+PROCEDURE moveTokenDown[t AS BYTE]
 
     ' Let's take coordinates of the token and the token type.
     x = tokenX(t)
@@ -671,7 +671,7 @@ END PROC
 ' This procedure will check if there are the conditions
 ' to move down a token by one cell. If so, it will move
 ' the token down by one step.
-PROCEDURE moveToken[t]
+PROCEDURE moveToken[t AS BYTE]
 
     ' The token cannot be moved if it is not currently used.    
     EXIT PROC WITH FALSE IF t > lastUsedToken
@@ -691,6 +691,7 @@ PROCEDURE moveToken[t]
         ' make any check while tokens are moving.
         RETURN TRUE
     ELSE
+
         ' We communicate to the caller that the token has NOT been moved.
         RETURN FALSE
     ENDIF 
@@ -700,6 +701,8 @@ END PROC
 ' This procedure wiill move every (used) tokens
 ' if the conditions are met.
 PROCEDURE moveTokens
+
+    VAR i AS BYTE
 
     ' There are not used tokens. So we communicate to the caller
     ' that no token has been moved. This information will be used
@@ -722,7 +725,7 @@ PROCEDURE moveTokens
 END PROC
 
 ' This procedure will put (if possible) a token on the playfield.
-PROCEDURE putTokenAt[x, c]
+PROCEDURE putTokenAt[x AS BYTE, c AS BYTE]
     
     ' No more token available, so... exit!
     EXIT PROC WITH FALSE IF lastUsedToken == tokens
@@ -758,7 +761,7 @@ END PROC
 ' This is the common procedure between the computer and the human player. 
 ' The aim is to check if there is a possibility to put a token.
 ' Of course, he also takes care of changing players if that happens.
-PROCEDURE pollToken[x]
+PROCEDURE pollToken[x AS BYTE]
 
     IF currentPlayer == player1 THEN
         actualTokenType = tokenA
@@ -808,7 +811,9 @@ PROCEDURE pollKeyboardForColumn
     x = VAL(k)
 
     IF ( x > 0 ) AND ( x <= columns ) THEN
+        
         CALL pollToken[x]
+
     ENDIF
 
 END PROC
@@ -817,15 +822,14 @@ END PROC
 ' color there are along a certain line, starting from a specific 
 ' position. This is partial information, which however tells us 
 ' if the last move was successful.
-PROCEDURE countTokensOfAColorFromXYOnDirection[c, x, y, dx, dy]
+PROCEDURE countTokensOfAColorFromXYOnDirection[ c AS BYTE, x AS BYTE, y AS BYTE, dx AS BYTE, dy AS BYTE ]
 
     ' Center of counting
     cx = x
     cy = y
 
     ' Number of tokens of the same value.
-    ' Counting myself as 1.
-    t = 1
+    t = 0
 
     ' Loop along at most 3 cells
     FOR i=0 TO 3
@@ -983,3 +987,4 @@ BEGIN GAMELOOP
     CALL drawFinalScreen[playerWon]
 
 END GAMELOOP
+
