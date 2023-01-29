@@ -17,14 +17,14 @@
 ' * limitations under the License.
 ' *----------------------------------------------------------------------------
 ' * Concesso in licenza secondo i termini della Licenza Apache, versione 2.0
-' * (la "Licenza"); è proibito usare questo file se non in conformità alla
-' * Licenza. Una copia della Licenza è disponibile all'indirizzo:
+' * (la "Licenza"); ? proibito usare questo file se non in conformit? alla
+' * Licenza. Una copia della Licenza ? disponibile all'indirizzo:
 ' *
 ' * http://www.apache.org/licenses/LICENSE-2.0
 ' *
 ' * Se non richiesto dalla legislazione vigente o concordato per iscritto,
-' * il software distribuito nei termini della Licenza è distribuito
-' * "COSì COM'è", SENZA GARANZIE O CONDIZIONI DI ALCUN TIPO, esplicite o
+' * il software distribuito nei termini della Licenza ? distribuito
+' * "COS? COM'?", SENZA GARANZIE O CONDIZIONI DI ALCUN TIPO, esplicite o
 ' * implicite. Consultare la Licenza per il testo specifico che regola le
 ' * autorizzazioni e le limitazioni previste dalla medesima.
 ' ****************************************************************************/
@@ -147,18 +147,18 @@ CONST player2MenuLabel = IF(( SCREEN WIDTH > 160), IF(( SCREEN HEIGHT > 200 ),"[
 
 ' Assign all the graphical resources. Note the use of ":=" direct assing
 ' operator. This is needed to avoid useless copies.
-titleImage := IMAGE LOAD("resources/title.png")
-tokenAImage := IMAGE LOAD("resources/tokenAC.png")
-tokenBImage := IMAGE LOAD("resources/tokenBC.png")
-emptyImage := IMAGE LOAD("resources/emptyC.png")
-player1Image := IMAGE LOAD("resources/player1.png")
-player2Image := IMAGE LOAD("resources/player2.png")
-computer1Image := IMAGE LOAD("resources/computer1.png")
-computer2Image := IMAGE LOAD("resources/computer2.png")
-arrow1Image := IMAGE LOAD("resources/arrow1.png")
-arrow2Image := IMAGE LOAD("resources/arrow2.png")
-arrow3Image := IMAGE LOAD("resources/arrow3.png")
-clearImage := IMAGE LOAD("resources/clear.png")
+titleImage := IMAGE LOAD("examples/resources/title.png")
+tokenAImage := IMAGE LOAD("examples/resources/tokenAC.png")
+tokenBImage := IMAGE LOAD("examples/resources/tokenBC.png")
+emptyImage := IMAGE LOAD("examples/resources/emptyC.png")
+player1Image := IMAGE LOAD("examples/resources/player1.png")
+player2Image := IMAGE LOAD("examples/resources/player2.png")
+computer1Image := IMAGE LOAD("examples/resources/computer1.png")
+computer2Image := IMAGE LOAD("examples/resources/computer2.png")
+arrow1Image := IMAGE LOAD("examples/resources/arrow1.png")
+arrow2Image := IMAGE LOAD("examples/resources/arrow2.png")
+arrow3Image := IMAGE LOAD("examples/resources/arrow3.png")
+clearImage := IMAGE LOAD("examples/resources/clear.png")
 
 ' Precalculate the width and the height of the various images.
 ' They are always of the same size, so it is sufficient to
@@ -681,7 +681,11 @@ PROCEDURE moveToken[t AS BYTE]
 
     ' The token can be moved only if the next (vertical) cell
     ' is free. In that case...
+    NOP
+    NOP
     IF playfield(tokenX(t),tokenY(t)+1) == freeCell THEN
+    NOP
+    NOP
 
         ' ... move the token down by one position!
         CALL moveTokenDown[t]
@@ -824,6 +828,11 @@ END PROC
 ' if the last move was successful.
 PROCEDURE countTokensOfAColorFromXYOnDirection[ c AS BYTE, x AS BYTE, y AS BYTE, dx AS BYTE, dy AS BYTE ]
 
+    DIM i AS BYTE
+
+    DIM cx AS SIGNED BYTE
+    DIM cy AS SIGNED BYTE
+
     ' Center of counting
     cx = x
     cy = y
@@ -887,43 +896,46 @@ PROCEDURE checkIfPlayerWon
 
     ' Has the player won on NORD EAST direction?
     IF countTokensOfAColorFromXYOnDirection[c,cx,cy,1,-1] >= tokensInARowToWin THEN
-        RETURN previousPlayer
+        GOTO success
     ENDIF
 
     ' Has the player won on EAST direction?
     IF countTokensOfAColorFromXYOnDirection[c,cx,cy,1,0] >= tokensInARowToWin THEN
-        RETURN previousPlayer
+        GOTO success
     ENDIF
 
     ' Has the player won on SOUTH EAST direction?
     IF countTokensOfAColorFromXYOnDirection[c,cx,cy,1,1] >= tokensInARowToWin THEN
-        RETURN previousPlayer
+        GOTO success
     ENDIF
 
     ' Has the player won on SOUTH direction?
     IF countTokensOfAColorFromXYOnDirection[c,cx,cy,0,1] >= tokensInARowToWin THEN
-        RETURN previousPlayer
+        GOTO success
     ENDIF
 
     ' Has the player won on SOUTH WEST direction?
     IF countTokensOfAColorFromXYOnDirection[c,cx,cy,-1,1] >= tokensInARowToWin THEN
-        RETURN previousPlayer
+        GOTO success
     ENDIF
 
     ' Has the player won on NORD direction?
     IF countTokensOfAColorFromXYOnDirection[c,cx,cy,-1,0] >= tokensInARowToWin THEN
-        RETURN previousPlayer
+        GOTO success
     ENDIF
 
     ' Has the player won on NORTH WEST direction?
     IF countTokensOfAColorFromXYOnDirection[c,cx,cy,-1,-1] >= tokensInARowToWin THEN
-        RETURN previousPlayer
+        GOTO success
     ENDIF
 
     ' Let's reset the used column.
     lastUsedColumn = unusedToken
 
     RETURN FALSE
+
+success:
+        RETURN previousPlayer
 
 END PROC
 
@@ -987,4 +999,6 @@ BEGIN GAMELOOP
     CALL drawFinalScreen[playerWon]
 
 END GAMELOOP
+
+
 
