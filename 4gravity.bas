@@ -147,18 +147,18 @@ CONST player2MenuLabel = IF(( SCREEN WIDTH > 160), IF(( SCREEN HEIGHT > 200 ),"[
 
 ' Assign all the graphical resources. Note the use of ":=" direct assing
 ' operator. This is needed to avoid useless copies.
-titleImage := IMAGE LOAD("examples/resources/title.png")
-tokenAImage := IMAGE LOAD("examples/resources/tokenAC.png")
-tokenBImage := IMAGE LOAD("examples/resources/tokenBC.png")
-emptyImage := IMAGE LOAD("examples/resources/emptyC.png")
-player1Image := IMAGE LOAD("examples/resources/player1.png")
-player2Image := IMAGE LOAD("examples/resources/player2.png")
-computer1Image := IMAGE LOAD("examples/resources/computer1.png")
-computer2Image := IMAGE LOAD("examples/resources/computer2.png")
-arrow1Image := IMAGE LOAD("examples/resources/arrow1.png")
-arrow2Image := IMAGE LOAD("examples/resources/arrow2.png")
-arrow3Image := IMAGE LOAD("examples/resources/arrow3.png")
-clearImage := IMAGE LOAD("examples/resources/clear.png")
+titleImage := IMAGE LOAD("resources/title.png")
+tokenAImage := IMAGE LOAD("resources/tokenAC.png")
+tokenBImage := IMAGE LOAD("resources/tokenBC.png")
+emptyImage := IMAGE LOAD("resources/emptyC.png")
+player1Image := IMAGE LOAD("resources/player1.png")
+player2Image := IMAGE LOAD("resources/player2.png")
+computer1Image := IMAGE LOAD("resources/computer1.png")
+computer2Image := IMAGE LOAD("resources/computer2.png")
+arrow1Image := IMAGE LOAD("resources/arrow1.png")
+arrow2Image := IMAGE LOAD("resources/arrow2.png")
+arrow3Image := IMAGE LOAD("resources/arrow3.png")
+clearImage := IMAGE LOAD("resources/clear.png")
 
 ' Precalculate the width and the height of the various images.
 ' They are always of the same size, so it is sufficient to
@@ -999,6 +999,7 @@ BEGIN GAMELOOP
     CALL drawFinalScreen[playerWon]
 
 END GAMELOOP
+
 
 
 
