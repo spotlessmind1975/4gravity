@@ -1,4 +1,4 @@
-' *****************************************************************************
+﻿' *****************************************************************************
 ' * 4 (FOUR) GRAVITY - a connect 4 clone for retrocomputers                   *
 ' *****************************************************************************
 ' * Copyright 2021 Marco Spedaletti (asimov@mclink.it)
@@ -40,6 +40,8 @@ DEFINE STRING COUNT 16
 ' We ask to use at most 128 bytes for strings.
 ' This will free about 2Kb
 DEFINE STRING SPACE 256
+
+DEFINE SCREEN MODE UNIQUE
 
 ' ============================================================================
 ' GAME CONSTANTS
@@ -354,7 +356,7 @@ PROCEDURE drawPlayfield
         PUT IMAGE computer2Image AT offsetXPlayer2, offsetYPlayers
     ENDIF
 
-    CALL drawPlayerNames
+    CALL drawPlayerNames ON C64, DRAGON
     
 END PROC
 
@@ -552,7 +554,7 @@ PROCEDURE drawTitleScreen
         INC yt
 
         ' Let's suggest to press the SPACE key to PLAY!
-        LOCATE 10,yt: CENTER "[SPACE] TO PLAY"
+        LOCATE 10,yt: CENTER "SPACE TO PLAY"
 
         INC yt
         INC yt
@@ -561,10 +563,10 @@ PROCEDURE drawTitleScreen
         REPEAT
 
             k = INKEY$
-
+            
             ' While waiting for a button to be pressed, 
             ' we offer a couple of informational messages.
-            CALL informationalMessages
+            CALL informationalMessages ON C64
 
         UNTIL k<>""
 
@@ -630,7 +632,7 @@ PROCEDURE drawFinalScreen[p AS BYTE]
     ENDIF
 
     ' ' Suggest to press any key to start.
-    LOCATE 10,yt + 4: CENTER "*ANY KEY* TO CONTINUE"
+    LOCATE 10,yt + 4: CENTER "ANY KEY TO CONTINUE"
 
     WAIT KEY
 
@@ -972,7 +974,7 @@ BEGIN GAMELOOP
             playerWon = checkIfPlayerWon[]
 
             ' Update the player status.
-            CALL drawPlayerStatus
+            CALL drawPlayerStatus ON C64
 
             ' If nobody has win, asks for the next move.
             IF playerWon == noPlayer THEN
@@ -999,6 +1001,8 @@ BEGIN GAMELOOP
     CALL drawFinalScreen[playerWon]
 
 END GAMELOOP
+
+
 
 
 
