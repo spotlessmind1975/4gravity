@@ -41,6 +41,9 @@ DEFINE STRING COUNT 16
 ' This will free about 2Kb
 DEFINE STRING SPACE 256
 
+' We ask to use just one graphical mode, discarding the
+' code for the rest of graphical modes. This will free
+' KB of code space.
 DEFINE SCREEN MODE UNIQUE
 
 ' ============================================================================
@@ -941,6 +944,16 @@ success:
 
 END PROC
 
+' This procedure will increment the timer to simulate a timer. This is
+' actually needed only for c128z target
+PROCEDURE emulateTimer ON C128Z
+	INC fineTimer
+	IF fineTimer > 100 THEN
+		INC TI
+		fineTimer = 0
+	ENDIF
+END PROC
+	
 ' ----------------------------------------------------------------------------
 ' --- MAIN LOOP
 ' ----------------------------------------------------------------------------
@@ -976,6 +989,9 @@ BEGIN GAMELOOP
             ' Update the player status.
             CALL drawPlayerStatus ON C64
 
+			' Emulate timer for the c128z target
+			emulateTimer[] ON C128Z
+			
             ' If nobody has win, asks for the next move.
             IF playerWon == noPlayer THEN
                 IF currentPlayer == player1 THEN
