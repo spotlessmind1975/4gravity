@@ -599,6 +599,10 @@ END PROC
 ' This procedure deals with designing the final screen.
 PROCEDURE drawFinalScreen[p AS BYTE]
 
+	' Force y to INTEGER to allow compilation under 6809
+	' that has no 32 bit division.
+	DIM y AS INTEGER
+	
     ' Clear the screen
     CLS
     
@@ -1017,6 +1021,7 @@ BEGIN GAMELOOP
     CALL drawFinalScreen[playerWon]
 
 END GAMELOOP
+
 
 
 
