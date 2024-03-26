@@ -104,6 +104,8 @@ DIM tokenX AS BYTE WITH unusedToken (tokens)
 DIM tokenY AS BYTE WITH unusedToken (tokens)
 DIM tokenC AS BYTE WITH unusedToken (tokens)
 
+VAR fineTimer AS BYTE = 0
+
 ' This variable store the last used token index.
 ' (we force to be a byte!)
 VAR lastUsedToken AS BYTE = unusedToken
@@ -951,6 +953,7 @@ END PROC
 ' This procedure will increment the timer to simulate a timer. This is
 ' actually needed only for c128z target
 PROCEDURE emulateTimer ON C128Z
+	SHARED fineTimer
 	INC fineTimer
 	IF fineTimer > 100 THEN
 		INC TI
