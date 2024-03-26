@@ -35,11 +35,11 @@
 
 ' We ask to define at most 10 independent strings.
 ' This will free about 1Kb
-DEFINE STRING COUNT 16
+DEFINE STRING COUNT 32
 
 ' We ask to use at most 128 bytes for strings.
 ' This will free about 2Kb
-DEFINE STRING SPACE 256
+DEFINE STRING SPACE 512
 
 ' We ask to use just one graphical mode, discarding the
 ' code for the rest of graphical modes. This will free
@@ -1021,6 +1021,7 @@ BEGIN GAMELOOP
     CALL drawFinalScreen[playerWon]
 
 END GAMELOOP
+
 
 
 
